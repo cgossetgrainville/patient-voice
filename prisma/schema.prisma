@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  id             Int                   @id @default(autoincrement())
+  nom            String
+  prenom         String
+  enquetes       EnqueteDeSatisfaction[]
+}
+
+model EnqueteDeSatisfaction {
+  id                        Int                  @id @default(autoincrement())
+  transcription             String
+  tableau                   String?
+  pdf_transcription         String?
+  pdf_tableau               String?
+  mp3_audio                 String?
+  duree                     Float?
+  date_heure                DateTime             @default(now())
+  score_satisfaction_global Float?
+  label_satisfaction_global String?
+  source                    String?
+  nombre_mots               Int?
+  commentaire_pro           String?
+
+  patient                   Patient?             @relation(fields: [patientId], references: [id])
+  patientId                 Int?
+
+  details                   DetailSatisfaction[]
+}
+
+model DetailSatisfaction {
+  id                Int     @id @default(autoincrement())
+  etape_parcours    String
+  score_satisfaction Int
+  resume_verbatim   String
+  sentiment         String
+  recommandation    String
+  score_impact      Int
+  score_faisabilite Int
+  indice_priorite   Int
+  etat_action       String
+
+  enquete           EnqueteDeSatisfaction @relation(fields: [enqueteId], references: [id])
+  enqueteId         Int
+}
