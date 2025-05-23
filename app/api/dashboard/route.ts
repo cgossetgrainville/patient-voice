@@ -1,76 +1,79 @@
 // /app/api/dashboard/route.ts
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
 
-const prisma = new PrismaClient();
+// Crée une connexion à la base via la variable d'environnement DATABASE_URL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// Helper pour exécuter une requête SQL
+async function query(text: string, params: any[] = []) {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(text, params);
+    return res.rows;
+  } finally {
+    client.release();
+  }
+}
 
 export async function GET() {
-  // Sentiment moyen global
-  const sentiment = await prisma.enqueteDeSatisfaction.aggregate({
-    _avg: { score_satisfaction_global: true },
-  });
+  // 1. Sentiment moyen global
+  const sentimentRes = await query(
+    `SELECT AVG(score_satisfaction_global)::float AS sentiment_moyen FROM enquete_de_satisfaction`
+  );
+  const sentimentMoyen = sentimentRes[0]?.sentiment_moyen ?? 0;
 
-  // Nombre total de verbatims
-  const totalVerbatims = await prisma.enqueteDeSatisfaction.count();
+  // 2. Nombre total de verbatims
+  const totalVerbatimsRes = await query(
+    `SELECT COUNT(*)::int AS total FROM enquete_de_satisfaction`
+  );
+  const totalVerbatims = totalVerbatimsRes[0]?.total ?? 0;
 
-  // Regrouper par thématique
-  const themes = await prisma.detailSatisfaction.groupBy({
-    by: ["etape_parcours"],
-    _count: { etape_parcours: true },
-    _avg: { score_satisfaction: true },
-  });
+  // 3. Group by thématique
+  const themes = await query(
+    `SELECT etape_parcours AS label, COUNT(*) AS count, AVG(score_satisfaction)::float AS sentiment
+     FROM detail_satisfaction
+     GROUP BY etape_parcours`
+  );
 
-  // Problèmes concrets prioritaires
-  const problems = await prisma.detailSatisfaction.findMany({
-    where: { sentiment: "NÉGATIF" },
-    orderBy: { indice_priorite: "desc" },
-    select: {
-      id: true,
-      etape_parcours: true,
-      resume_verbatim: true,
-      indice_priorite: true,
-      recommandation: true,
-      etat_action: true,
-    },
-  });
+  // 4. Problèmes concrets prioritaires
+  const problems = await query(
+    `SELECT id, etape_parcours, resume_verbatim, indice_priorite, recommandation, etat_action
+     FROM detail_satisfaction
+     WHERE sentiment = 'NÉGATIF'
+     ORDER BY indice_priorite DESC
+     LIMIT 10`
+  );
 
-  const enquetes = await prisma.enqueteDeSatisfaction.findMany({
-    include: { patient: true },
-    orderBy: { score_satisfaction_global: "desc" },
-    take: 20,
-  });
+  // 5. Historique des enquêtes (avec patient)
+  const enquetes = await query(
+    `SELECT e.*, json_build_object('id', p.id, 'prenom', p.prenom, 'nom', p.nom) AS patient
+     FROM enquete_de_satisfaction e
+     LEFT JOIN patient p ON e.patient_id = p.id
+     ORDER BY score_satisfaction_global DESC
+     LIMIT 20`
+  );
 
-  // Calcul de la moyenne des scores de satisfaction globale par jour à partir de date_heure
-  const rawParJour = await prisma.enqueteDeSatisfaction.findMany({
-    select: {
-      date_heure: true,
-      score_satisfaction_global: true,
-    },
-    orderBy: { date_heure: "asc" }
-  });
-
-  // On regroupe par date (en ignorant l'heure)
-  const grouped: Record<string, number[]> = {};
-  rawParJour.forEach((e) => {
-    const dateStr = e.date_heure.toISOString().substring(0, 10); // yyyy-mm-dd
-    if (!grouped[dateStr]) grouped[dateStr] = [];
-    if (typeof e.score_satisfaction_global === 'number') {
-      grouped[dateStr].push(e.score_satisfaction_global);
-    }
-  });
-  const satisfactionParJour = Object.entries(grouped).map(([date, scores]) => ({
-    date,
-    moyenne: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null,
+  // 6. Calcul de la moyenne des scores de satisfaction globale par jour
+  const parJour = await query(
+    `SELECT date_trunc('day', date_heure) AS date, AVG(score_satisfaction_global)::float AS moyenne
+     FROM enquete_de_satisfaction
+     GROUP BY date
+     ORDER BY date ASC`
+  );
+  // Reformate la date pour l'affichage (YYYY-MM-DD)
+  const satisfactionParJour = parJour.map((row) => ({
+    date: row.date.toISOString().substring(0, 10),
+    moyenne: row.moyenne,
   }));
 
   return NextResponse.json({
-    sentimentMoyen: sentiment._avg.score_satisfaction_global ?? 0,
+    sentimentMoyen,
     totalVerbatims,
-    themes: themes.map((t) => ({
-      label: t.etape_parcours,
-      count: t._count.etape_parcours,
-      sentiment: t._avg.score_satisfaction,
-    })),
+    themes,
     problems,
     enquetes,
     satisfactionParJour,

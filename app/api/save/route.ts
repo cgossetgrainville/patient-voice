@@ -1,10 +1,23 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { spawn } from "child_process";
 import path from "path";
 import os from "os";
+import { Pool } from "pg";
 
-const prisma = new PrismaClient();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+async function query(text: string, params: any[] = []) {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(text, params);
+    return res.rows;
+  } finally {
+    client.release();
+  }
+}
 
 function cleanAndGeneratePDF(rawText: string, patientName: string): Promise<{ text: string; pdfPath: string }> {
   return new Promise((resolve, reject) => {
@@ -93,14 +106,16 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { nom, prenom, transcription, duree, commentaire_pro, tableau } = body;
 
-    let patient = await prisma.patient.findFirst({
-      where: { nom, prenom },
-    });
+    let [patient] = await query(
+      "SELECT * FROM patient WHERE nom=$1 AND prenom=$2 LIMIT 1",
+      [nom, prenom]
+    );
 
     if (!patient) {
-      patient = await prisma.patient.create({
-        data: { nom, prenom },
-      });
+      [patient] = await query(
+        "INSERT INTO patient (nom, prenom) VALUES ($1, $2) RETURNING *",
+        [nom, prenom]
+      );
     }
 
     const patientName = `${prenom}-${nom}`.replace(/\s+/g, "_");
@@ -115,7 +130,7 @@ export async function POST(req: Request) {
       sentiment: row.sentiment,
       score_impact: row.score_impact,
       score_faisabilite: row.score_faisabilite,
-      indice_priorite: Math.min((row.indice_priorite / 108) * 100, 100),
+      indice_priorite: Math.round(row.indice_priorite),
       etat_action: row.etat_action,
       recommandation: row.recommandation || ""
     }));
@@ -131,28 +146,40 @@ export async function POST(req: Request) {
         : "Insatisfait"
       : null;
 
+    const result = await query(
+      `INSERT INTO enquete_de_satisfaction (
+        transcription, tableau, pdf_transcription, pdf_tableau, mp3_audio, duree, source, score_satisfaction_global,
+        label_satisfaction_global, nombre_mots, commentaire_pro, patient_id
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+      [
+        cleanedText, tableau, pdfPath, pdfTablePath, null, duree, "interface",
+        moyenne, label, cleanedText.split(" ").length, commentaire_pro, patient.id
+      ]
+    );
+    const enqueteId = result[0].id;
 
-    const enq = await prisma.enqueteDeSatisfaction.create({
-      data: {
-        transcription: cleanedText,
-        tableau,
-        pdf_transcription: pdfPath,
-        pdf_tableau: pdfTablePath,
-        mp3_audio: null,
-        duree,
-        source: "interface",
-        score_satisfaction_global: moyenne,
-        label_satisfaction_global: label,
-        nombre_mots: cleanedText.split(" ").length,
-        commentaire_pro : commentaire_pro,
-        patient: { connect: { id: patient.id } },
-        details: {
-          create: detailsToInsert,
-        },
-      },
-    });
+    for (const detail of detailsToInsert) {
+      await query(
+        `INSERT INTO detail_satisfaction (
+          etape_parcours, score_satisfaction, resume_verbatim, sentiment, score_impact, score_faisabilite,
+          indice_priorite, etat_action, recommandation, enquete_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [
+          detail.etape_parcours,
+          detail.score_satisfaction,
+          detail.resume_verbatim,
+          detail.sentiment,
+          detail.score_impact,
+          detail.score_faisabilite,
+          detail.indice_priorite,
+          detail.etat_action,
+          detail.recommandation,
+          enqueteId
+        ]
+      );
+    }
 
-    return NextResponse.json({ success: true, id: enq.id });
+    return NextResponse.json({ success: true, id: enqueteId });
   } catch (error) {
     console.error("Erreur dans /api/save :", error);
     return NextResponse.json({ success: false, error: "Erreur serveur" }, { status: 500 });
@@ -171,10 +198,10 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
     }
 
-    const updated = await prisma.detailSatisfaction.update({
-      where: { id },
-      data: { etat_action },
-    });
+    const [updated] = await query(
+      "UPDATE detail_satisfaction SET etat_action=$1 WHERE id=$2 RETURNING *",
+      [etat_action, id]
+    );
 
     return NextResponse.json({ success: true, detail: updated });
   } catch (error) {
