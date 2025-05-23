@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+torch           # si vous utilisez PyTorch pour faster-whisper
+faster-whisper  # ou whisper.cpp selon votre choix
+webrtcvad       # pour le découpeur de silences
