@@ -7,7 +7,7 @@ url = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
 
 client = OpenAI(
     base_url=url,
-    api_key=os.getenv("OVH_API_KEY")
+    api_key="eyJhbGciOiJFZERTQSIsImtpZCI6IjgzMkFGNUE5ODg3MzFCMDNGM0EzMTRFMDJFRUJFRjBGNDE5MUY0Q0YiLCJraW5kIjoicGF0IiwidHlwIjoiSldUIn0.eyJ0b2tlbiI6InlKR0NEVGtnSGRINUdTOSswTnlzWGdyZzRsU1I5ZHlENFhERG9aN0RmMXc9In0.5Wf8B9zb8N9OjTOYYX8hzzK-xgDWgKyIM4ilKHcudOIR4rDydMMHfeUerPcsEQlMzA3V6GJIq1xP7wGw_yt_Ag"
 )
 
 def clean_transcription(raw_text: str) -> str:

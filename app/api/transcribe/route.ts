@@ -11,7 +11,7 @@ import FormData from "form-data";
 import ffmpeg from "fluent-ffmpeg";
 
 const OVH_ASR_URL = "https://nvr-asr-fr-fr.endpoints.kepler.ai.cloud.ovh.net/api/v1/asr/recognize";
-const OVH_API_KEY = process.env.OVH_API_KEY || "eyJhbGciOiJFZERTQSIsImtpZCI6IjgzMkFGNUE5ODg3MzFCMDNGM0EzMTRFMDJFRUJFRjBGNDE5MUY0Q0YiLCJraW5kIjoicGF0IiwidHlwIjoiSldUIn0"; // Mets ta clé dans .env
+const OVH_API_KEY = "eyJhbGciOiJFZERTQSIsImtpZCI6IjgzMkFGNUE5ODg3MzFCMDNGM0EzMTRFMDJFRUJFRjBGNDE5MUY0Q0YiLCJraW5kIjoicGF0IiwidHlwIjoiSldUIn0.eyJ0b2tlbiI6InlKR0NEVGtnSGRINUdTOSswTnlzWGdyZzRsU1I5ZHlENFhERG9aN0RmMXc9In0.5Wf8B9zb8N9OjTOYYX8hzzK-xgDWgKyIM4ilKHcudOIR4rDydMMHfeUerPcsEQlMzA3V6GJIq1xP7wGw_yt_Ag";
 
 export async function POST(req: Request) {
   const formData = await req.formData();
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     if (fs.existsSync(originalPath)) fs.unlinkSync(originalPath);
     if (fs.existsSync(wavPath)) fs.unlinkSync(wavPath);
     console.error("Erreur ASR OVH :", error?.message || error);
-    return NextResponse.json({ error: "Erreur ASR OVH", details: error?.message || error }, { status: 500 });
+    return NextResponse.json({ error: "Erreur ASR OVH (catch)", details: error?.message || error }, { status: 500 });
   }
 
   if (fs.existsSync(originalPath)) fs.unlinkSync(originalPath);
