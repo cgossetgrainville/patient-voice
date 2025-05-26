@@ -3,7 +3,7 @@ import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) : Promise<Response> {
   const { text, patientName } = await req.json();
   
   if (!text) {
@@ -91,5 +91,9 @@ export async function POST(req: NextRequest) {
 
     table.stdin.write(cleanedText);
     table.stdin.end();
+  });
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
   });
 }

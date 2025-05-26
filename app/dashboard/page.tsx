@@ -129,7 +129,7 @@ export default function Dashboard() {
                     <YAxis domain={[0, 10]} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="moyenne" stroke="#1d4ed8" name="Score moyen" />
+                    <Line type="monotone" dataKey="moyenne" stroke="#1d4ed8" strokeWidth={3} name="Score moyen" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -198,7 +198,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {sortData(data.problems, problemsSortKey as keyof typeof data.problems[0], problemsSortOrder)
+                      {sortData(data.problems, problemsSortKey as string, problemsSortOrder)
                         .slice(0, 10) // coupe à 10 lignes
                         .map((p: any, index: number) => (
                         <tr key={index} className="table-row-hover">
@@ -276,7 +276,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {sortData(data.enquetes, enquetesSortKey as keyof typeof data.enquetes[0], enquetesSortOrder)
+                      {sortData(data.enquetes, enquetesSortKey as string, enquetesSortOrder)
                         .slice(0, 10) // coupe à 10 lignes
                         .map((e: any, index: number) => (
                         <tr key={index} className="table-row-hover">

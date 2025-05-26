@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) : Promise<Response> {
   const { text, prenom, nom } = await req.json();
   const patientName = `${prenom}-${nom}`;
 
@@ -42,5 +42,9 @@ export async function POST(req: NextRequest) {
     const trimmed = text.length > 8000 ? text.slice(0, 8000) : text;
     python.stdin.write(trimmed);
     python.stdin.end();
+  });
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
   });
 }
