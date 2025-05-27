@@ -1,12 +1,15 @@
 // /app/api/dashboard/route.ts
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Crée une connexion à la base via la variable d'environnement DATABASE_URL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
+console.log("DB URL utilisée :", process.env.DATABASE_URL);
 
 // Helper pour exécuter une requête SQL
 async function query(text: string, params: any[] = []) {
