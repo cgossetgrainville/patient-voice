@@ -285,6 +285,17 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
                 });
                 const cleanData = await cleanRes.json();
 
+                const rapportRes = await fetch("/api/rapport", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    text: transcription,
+                    prenom: prenomPart,
+                    nom: nomPart,
+                  }),
+                });
+                const rapportData = await rapportRes.json();
+
                 const tableRes = await fetch("/api/table", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },

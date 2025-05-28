@@ -104,13 +104,13 @@ if __name__ == "__main__":
         if len(row) == 9:
             parsed_rows.append({
                 "etape_parcours": row[0].strip(),
-                "score_satisfaction": int(row[1].strip()),
+                "score_satisfaction": int(row[1].strip().replace('"', '')),
                 "resume_verbatim": row[2].strip(),
                 "sentiment": row[3].strip(),
                 "recommandation": row[4].strip(),
-                "score_impact": int(row[5].strip()),
-                "score_faisabilite": int(row[6].strip()),
-                "indice_priorite": row[7].strip(),
+                "score_impact": int(row[5].strip().replace('"', '')),
+                "score_faisabilite": int(row[6].strip().replace('"', '')),
+                "indice_priorite": row[7].strip().replace('"', ''),
                 "etat_action": row[8].strip(),
             })
 

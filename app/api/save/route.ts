@@ -101,6 +101,45 @@ function generateTablePDF(rawText: string, patientName: string): Promise<{ pdfPa
   });
 }
 
+// Ajout du rapport PDF (appel à rapport.py)
+function generateRapportPDF(rawText: string, patientName: string): Promise<{ pdfPath: string }> {
+  return new Promise((resolve, reject) => {
+    const filename = `public/uploads/${patientName}-Rapport`;
+    const python = spawn("python3", ["./scripts/rapport.py"], {
+      env: { ...process.env, PDF_FILENAME: filename, PATIENT_NAME: patientName },
+    });
+    let output = "";
+    let error = "";
+
+    python.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    python.stderr.on("data", (data) => {
+      error += data.toString();
+    });
+
+    python.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`rapport.py error: ${error}`));
+      } else {
+        const lines = output.trim().split("\n");
+        const firstLine = lines[0];
+        const pdfPathMatch = firstLine.match(/^(.+\.pdf)$/);
+        const pdfPath = pdfPathMatch ? pdfPathMatch[1].trim() : null;
+        if (!pdfPath) {
+          reject(new Error("PDF path not found in rapport output"));
+        } else {
+          resolve({ pdfPath });
+        }
+      }
+    });
+
+    python.stdin.write(rawText);
+    python.stdin.end();
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -122,6 +161,8 @@ export async function POST(req: Request) {
 
     const { text: cleanedText, pdfPath } = await cleanAndGeneratePDF(transcription, patientName);
     const { pdfPath: pdfTablePath, rows } = await generateTablePDF(transcription, patientName);
+    // Appel du script rapport.py pour générer le rapport PDF
+    const { pdfPath: pdfRapportPath } = await generateRapportPDF(transcription, patientName);
 
     const detailsToInsert = (rows || []).map((row: any) => ({
       etape_parcours: row.etape_parcours,
@@ -148,11 +189,11 @@ export async function POST(req: Request) {
 
     const result = await query(
       `INSERT INTO enquete_de_satisfaction (
-        transcription, tableau, pdf_transcription, pdf_tableau, mp3_audio, duree, source, score_satisfaction_global,
+        transcription, tableau, pdf_transcription, pdf_tableau, pdf_rapport, duree, source, score_satisfaction_global,
         label_satisfaction_global, nombre_mots, commentaire_pro, patient_id
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
       [
-        cleanedText, tableau, pdfPath, pdfTablePath, null, duree, "interface",
+        cleanedText, tableau, pdfPath, pdfTablePath, pdfRapportPath, duree, "interface",
         moyenne, label, cleanedText.split(" ").length, commentaire_pro, patient.id
       ]
     );

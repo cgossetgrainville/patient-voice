@@ -12,7 +12,7 @@ import "../homepage.css";
 
 export default function ParametresPage() {
   const [adminInfo, setAdminInfo] = useState<{ prenom: string; nom: string } | null>(null);
-  const [prompts, setPrompts] = useState<{ cleaning_prompt: string; table_prompt: string } | null>(null);
+  const [prompts, setPrompts] = useState<{ cleaning_prompt: string; rapport_prompt: string; table_prompt: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -94,13 +94,19 @@ export default function ParametresPage() {
 
           {prompts ? (
             <div>
-              <h2>Prompt de nettoyage</h2>
+              <h1>Prompt de nettoyage</h1>
               <textarea
                 className="edit-textarea"
                 value={prompts.cleaning_prompt}
                 onChange={e => setPrompts({ ...prompts, cleaning_prompt: e.target.value })}
               />
-              <h2>Prompt d’analyse (tableau)</h2>
+              <h1>Prompt du Rapport de Satisfaction</h1>
+              <textarea
+                className="edit-textarea"
+                value={prompts.rapport_prompt}
+                onChange={e => setPrompts({ ...prompts, rapport_prompt: e.target.value })}
+              />
+              <h1>Prompt d’analyse (tableau)</h1>
               <textarea
                 className="edit-textarea"
                 value={prompts.table_prompt}

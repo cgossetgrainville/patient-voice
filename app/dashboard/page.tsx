@@ -284,6 +284,7 @@ export default function Dashboard() {
                         </th>
                         <th>Transcription</th>
                         <th>Tableau</th>
+                        <th>Rapport</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -307,6 +308,14 @@ export default function Dashboard() {
                             <button
                               className="text-blue-600 underline"
                               onClick={() => window.open(`/uploads/${e.pdf_tableau?.split("/").pop()}`, "_blank", "popup,width=800,height=600")}
+                            >
+                              Voir PDF
+                            </button>
+                          </td>
+                          <td>
+                            <button
+                              className="text-blue-600 underline"
+                              onClick={() => window.open(`/uploads/${e.pdf_rapport?.split("/").pop()}`, "_blank", "popup,width=800,height=600")}
                             >
                               Voir PDF
                             </button>

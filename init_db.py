@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS enquete_de_satisfaction (
     tableau TEXT,
     pdf_transcription TEXT,
     pdf_tableau TEXT,
-    mp3_audio TEXT,
+    pdf_rapport TEXT,
     duree FLOAT,
     date_heure TIMESTAMPTZ DEFAULT now(),
     score_satisfaction_global FLOAT,

@@ -9,7 +9,6 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
-console.log("DB URL utilisée :", process.env.DATABASE_URL);
 
 // Helper pour exécuter une requête SQL
 async function query(text: string, params: any[] = []) {
