@@ -1,6 +1,7 @@
 # /Users/m.mur/Patient Voice/patient-voice-app/scripts/clean.py
 
 import os
+import json
 from openai import OpenAI
 
 url = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
@@ -10,16 +11,15 @@ client = OpenAI(
     api_key=os.getenv("OVH_API_KEY")
 )
 
+# Load prompts from data/prompts.json
+with open(os.path.join(os.path.dirname(__file__), "..", "data", "prompts.json"), "r", encoding="utf-8") as f:
+    prompts = json.load(f)
+
+cleaning_prompt_template = prompts["cleaning_prompt"]
+
 def clean_transcription(raw_text: str) -> str:
     prompt = (
-        "Voici une transcription brute d’un échange audio entre un professionnel et un patient. "
-        "Corrige toutes les fautes et structure le dialogue pour qu’il soit fluide et naturel, sans changer le fond. "
-        "Supprime tous les mots parasites et hésitations (comme 'euh', 'hum', les répétitions inutiles, etc.). "
-        "Uniformise la ponctuation et réécris si besoin certaines phrases pour une meilleure compréhension, sans jamais dénaturer le propos. "
-        "Assure-toi que chaque intervenant est bien identifié (Professionnel ou Patient), comme ceci :\n\n"
-        "Professionnel : Bonjour, merci de prendre un peu de temps pour revenir avec nous sur votre hospitalisation...\n"
-        "Patient : Alors, globalement, l’accueil était plutôt bon... \n\n"
-        "N’ajoute rien, ne résume pas, et n’omets aucune information importante.\n\n"
+        f"{cleaning_prompt_template}\n\n"
         f'Transcription : """{raw_text}"""'
     )
 

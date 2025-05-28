@@ -1,8 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
-
-import { useState, useRef } from "react";
-import { useEffect } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useRef, useEffect } from "react";
 import "../components/AudioRecorder.css";
 import "../homepage.css";
 import "../dashboard/dashboard.css";
@@ -62,11 +60,17 @@ export default function QuestionnairePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [patientName, setPatientName] = useState("");
+  const [adminInfo, setAdminInfo] = useState<{ prenom: string; nom: string } | null>(null);
   useEffect(() => {
     if (answers.length > 0 || writtenAnswers.length > 0) {
       setTranscription(concatResponses(answers, writtenAnswers));
     }
   }, [answers, writtenAnswers]);
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.ok ? res.json() : null)
+      .then(setAdminInfo);
+  }, []);
 
   // Fonction utilitaire pour gérer la fin du questionnaire (audio et écrit)
   const handleFinish = async (finalRecordings: { index: number, blob: Blob }[], finalWrittenAnswers: { index: number, text: string }[]) => {
@@ -214,7 +218,7 @@ export default function QuestionnairePage() {
         <div className="p-6">
           <ul className="space-y-4">
             <li className="nav-item">
-              <a href="/" className="nav-link">Enquête</a>
+              <a href="/enquete" className="nav-link">Enquête</a>
             </li>
             <li className="nav-item">
               <a href="/questionnaire" className="nav-link">Questionnaire</a>
@@ -222,14 +226,17 @@ export default function QuestionnairePage() {
             <li className="nav-item">
               <a href="/dashboard" className="nav-link">Dashboard</a>
             </li>
-            <li className="nav-item">Paramètres</li>
+            <li className="nav-item"></li>
+              <a href="/parametres" className="nav-link">Parametres</a>
           </ul>
         </div>
         <div className="p-6 border-t border-blue-500 flex flex-col items-center">
           <div className="w-8 h-8 bg-blue-300 text-white rounded-full flex items-center justify-center mb-2 text-sm">
-            J
+            {adminInfo?.prenom?.charAt(0).toUpperCase() ?? "J"}
           </div>
-          <p className="text-sm text-center">Dr. Jean Dupont</p>
+          <p className="text-sm text-center">
+            {adminInfo ? `${adminInfo.prenom} ${adminInfo.nom}` : "Chargement..."}
+          </p>
           <p className="text-xs text-blue-200">Profil</p>
         </div>
       </aside>

@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 from openai import OpenAI
 
 url = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
@@ -9,33 +10,10 @@ client = OpenAI(
     api_key=os.getenv("OVH_API_KEY")
 )
 
-prompt_template = """
-Tu es un expert en analyse de verbatim patient.
+with open(os.path.join("data", "prompts.json"), "r", encoding="utf-8") as f:
+    prompts = json.load(f)
 
-À partir du verbatim ci-dessous, construis un tableau structuré **au format CSV** avec les colonnes suivantes, dans cet ordre exact. Pour la colonne "Étape du parcours", choisis uniquement parmi cette liste standardisée de catégories : Accueil, Prise en charge médicale, Information sur étapes suivantes, Gestion de la douleur et confort, Repas, Environnement et hygiène, Sortie, Relation équipe soignante, Expérience globale.
-
-Étape du parcours, Score satisfaction (0-10), Résumé verbatim, Sentiment, Recommandations, Score Impact, Score Faisabilité, Indice Priorité, État d’action.
-
-**Contraintes obligatoires :**
-- Réponds uniquement sous forme de tableau CSV (en-têtes + lignes), une ligne = une entrée.
-- N’ajoute aucun commentaire, aucune phrase d’introduction, ni résumé.
-- Ne saute aucune colonne. Chaque valeur doit être à sa place, et chaque ligne doit avoir **exactement 9 colonnes**.
-- Pour la colonne “Sentiment”, la valeur doit être exactement et exclusivement : POSITIF, NEUTRE, NÉGATIF. Aucun autre mot, aucune variation n’est acceptée.
-- Pour la colonne "Recommandation", sois le plus concis possible, en quelques mots, propose une amélioration ou une innovation concrète qui pourrait répondre au problème décrit, mais uniquement si le “Sentiment” est NÉGATIF. Sinon, laisse le champ vide.
-- Score Impact et Score Faisabilité sont des entiers entre 1 et 10.
-- **Calcule un Indice Priorité de 0 à 100** : plus la situation est critique/urgente, plus la note doit être élevée (0 = non prioritaire, 100 = priorité absolue). Sois cohérent avec l’ensemble du verbatim.
-- L’État d’action est toujours "À faire".
-- Utilise une seule ligne par entrée. Si un champ dépasse la largeur de colonne, fais des retours à la ligne automatiques dans le PDF, mais ne modifie pas le CSV.
-- Sois **extrêmement concis** dans les champs Résumé verbatim, Sentiment, Recommandation.
-- Si une cellule contient une virgule, elle doit obligatoirement être entourée de guillemets (exemple : "texte avec, une virgule").
-- Tous les champs texte doivent être encadrés de guillemets, même s’ils sont vides.
-- Le fichier doit être un CSV bien formé, chaque ligne contenant exactement 9 valeurs, séparées par des commas.
-
-Voici le verbatim à analyser :
-\"\"\"{verbatim}\"\"\"
-
-N’oublie pas de suivre **strictement** toutes les contraintes ci-dessus. Ne modifie jamais l’ordre des colonnes.
-"""
+prompt_template = prompts["table_prompt"]
 
 def generate_patient_table(verbatim: str) -> str:
     response = client.chat.completions.create(

@@ -227,3 +227,20 @@
     opacity: 1;
   }
 }
+.edit-textarea {
+  width: 100%;
+  max-width: none; /* enlève toute limite */
+  min-width: 600px; /* largeur minimale visible */
+  min-height: 400px;
+  font-size: 1rem;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  background-color: #f3f4f6;
+  color: #111827;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.parametres-wrapper {
+  margin-bottom: 100px; /* espace pour ne pas cacher le bouton par le footer */
+}
