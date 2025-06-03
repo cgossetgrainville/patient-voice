@@ -3,13 +3,10 @@ import { spawn } from "child_process";
 import path from "path";
 import os from "os";
 import { Pool } from "pg";
+import { headers } from "next/headers";
+import * as cookie from "cookie";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-
-async function query(text: string, params: any[] = []) {
+async function query(text: string, params: any[] = [], pool: Pool) {
   const client = await pool.connect();
   try {
     const res = await client.query(text, params);
@@ -141,19 +138,58 @@ function generateRapportPDF(rawText: string, patientName: string): Promise<{ pdf
 }
 
 export async function POST(req: Request) {
+  const rawCookie = req.headers.get("cookie");
+  if (!rawCookie) {
+    return NextResponse.json({ error: "Cookies manquants" }, { status: 401 });
+  }
+
+  const parsedCookies = cookie.parse(rawCookie);
+  const sessionRaw = parsedCookies["admin_session_info"];
+  console.log("SESSION RAW :", sessionRaw);
+
+  if (!sessionRaw) {
+    return NextResponse.json({ error: "Session absente" }, { status: 401 });
+  }
+
+  let adminId;
+  try {
+    const parsed = JSON.parse(sessionRaw);
+    console.log("SESSION PARSED :", parsed);
+    if (!parsed?.id) {
+      console.error("ID manquant dans le cookie :", parsed);
+      return NextResponse.json({ error: "ID manquant dans le cookie" }, { status: 401 });
+    }
+    adminId = parsed.id.toString();
+  } catch {
+    return NextResponse.json({ error: "Session invalide" }, { status: 401 });
+  }
+
+  const dbName = `db_00${adminId}`;
+
+  const pool = new Pool({
+    user: "avnadmin",
+    host: "postgresql-4b3783ad-o5359142f.database.cloud.ovh.net",
+    database: dbName,
+    password: "14IYsxzW6e3LMmJVTq0j",
+    port: 20184,
+    ssl: { rejectUnauthorized: false }
+  });
+
   try {
     const body = await req.json();
     const { nom, prenom, transcription, duree, commentaire_pro, tableau } = body;
 
     let [patient] = await query(
       "SELECT * FROM patient WHERE nom=$1 AND prenom=$2 LIMIT 1",
-      [nom, prenom]
+      [nom, prenom],
+      pool
     );
 
     if (!patient) {
       [patient] = await query(
         "INSERT INTO patient (nom, prenom) VALUES ($1, $2) RETURNING *",
-        [nom, prenom]
+        [nom, prenom],
+        pool
       );
     }
 
@@ -195,7 +231,8 @@ export async function POST(req: Request) {
       [
         cleanedText, tableau, pdfPath, pdfTablePath, pdfRapportPath, duree, "interface",
         moyenne, label, cleanedText.split(" ").length, commentaire_pro, patient.id
-      ]
+      ],
+      pool
     );
     const enqueteId = result[0].id;
 
@@ -216,7 +253,8 @@ export async function POST(req: Request) {
           detail.etat_action,
           detail.recommandation,
           enqueteId
-        ]
+        ],
+        pool
       );
     }
 
@@ -224,6 +262,8 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Erreur dans /api/save :", error);
     return NextResponse.json({ success: false, error: "Erreur serveur" }, { status: 500 });
+  } finally {
+    await pool.end();
   }
 }
 export async function PATCH(req: Request) {
@@ -239,10 +279,19 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
     }
 
+    // For PATCH, no dynamic pool is created, so fallback to original connectionString pool
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
+
     const [updated] = await query(
       "UPDATE detail_satisfaction SET etat_action=$1 WHERE id=$2 RETURNING *",
-      [etat_action, id]
+      [etat_action, id],
+      pool
     );
+
+    await pool.end();
 
     return NextResponse.json({ success: true, detail: updated });
   } catch (error) {

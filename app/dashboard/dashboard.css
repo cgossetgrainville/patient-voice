@@ -63,7 +63,7 @@ body {
 
 /* === Sidebar === */
 .sidebar {
-  width: 8rem;
+  width: 10rem;
   height: 100vh;
   background-color: #1f406e;
   color: white;
@@ -93,6 +93,7 @@ body {
 
 .nav-item {
   color: white;
+  padding-left: 1rem;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -108,7 +109,7 @@ body {
 .footer-bar {
   position: fixed;
   bottom: 0;
-  left: 8rem; /* matches sidebar width */
+  left: 10rem; /* matches sidebar width */
   width: calc(100% - 8rem);
   height: 100px;
   background-color: white;
@@ -176,6 +177,10 @@ body {
 
 .problems-table-wrapper {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 480px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
 }
 
 .problems-table {
@@ -187,13 +192,18 @@ body {
 .problems-table th, .problems-table td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e5e7eb;
-  text-align: left;
   vertical-align: top;
 }
 
 .problems-table th {
   background-color: var(--gray-light);
   font-weight: 600;
+}
+
+.problems-table td {
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
 }
 
 .table-row-hover:hover {
@@ -286,7 +296,23 @@ body {
 .patient-name-fixed {
   position: fixed;
   top: 1rem;
-  left: 9rem;
+  left: 12rem;
   background-color: white;
   z-index: 100;
+}
+
+.rotating-spinner {
+  width: 120px;
+  height: 120px;
+  animation: spin 1.8s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.loading-spinner-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
 }

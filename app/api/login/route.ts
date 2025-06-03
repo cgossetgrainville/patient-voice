@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     });
 
     res.cookies.set("admin_session_info", JSON.stringify({
+      id: user.id,
       prenom: user.prenom,
       nom: user.nom,
     }), {

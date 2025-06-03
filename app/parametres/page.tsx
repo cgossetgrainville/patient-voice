@@ -60,7 +60,7 @@ export default function ParametresPage() {
               <a href="/dashboard" className="nav-link">Dashboard</a>
             </li>
             <li className="nav-item">
-              <a href="/parametres" className="nav-link">Parametres</a>
+              <a href="/parametres" className="nav-link">Paramètres</a>
             </li>
           </ul>
         </div>
@@ -94,21 +94,24 @@ export default function ParametresPage() {
 
           {prompts ? (
             <div>
-              <h1>Prompt de nettoyage</h1>
+              <div style={{ fontSize: "1rem", fontWeight: "bold" }}>Prompt de nettoyage</div>
               <textarea
                 className="edit-textarea"
+                style={{ marginBottom: "1rem" }}
                 value={prompts.cleaning_prompt}
                 onChange={e => setPrompts({ ...prompts, cleaning_prompt: e.target.value })}
               />
-              <h1>Prompt du Rapport de Satisfaction</h1>
+              <div style={{ fontSize: "1rem", fontWeight: "bold" }}>Prompt du Rapport de Satisfaction</div>
               <textarea
                 className="edit-textarea"
+                style={{ marginBottom: "1rem" }}
                 value={prompts.rapport_prompt}
                 onChange={e => setPrompts({ ...prompts, rapport_prompt: e.target.value })}
               />
-              <h1>Prompt d’analyse (tableau)</h1>
+              <div style={{ fontSize: "1rem", fontWeight: "bold" }}>Prompt d’analyse (tableau)</div>
               <textarea
                 className="edit-textarea"
+                style={{ marginBottom: "1rem" }}
                 value={prompts.table_prompt}
                 onChange={e => setPrompts({ ...prompts, table_prompt: e.target.value })}
               />

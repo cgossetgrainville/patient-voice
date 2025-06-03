@@ -4,6 +4,7 @@ import "../homepage.css";
 
 import Image from "next/image";
 import logo1 from "../logo/logo1.png";
+import o from "../logo/o.png";
 import { useEffect, useState } from "react";
 import {
   PieChart,
@@ -60,20 +61,19 @@ export default function Dashboard() {
 
   // Fonction pour mettre à jour l'état d'action d'un problème
   const updateEtat = async (id: number, newEtat: string) => {
-    await fetch("/api/save", {
+    await fetch("/api/dashboard", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, etat_action: newEtat }),
     });
 
-    // Mise à jour locale de l’état `data.problems`
     setData((prev: any) => ({
       ...prev,
       problems: prev.problems.map((p: any) =>
         p.id === id ? { ...p, etat_action: newEtat } : p
       ),
     }));
-};
+  };
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -86,7 +86,13 @@ export default function Dashboard() {
       .then(setAdminInfo);
   }, []);
 
-  if (!data) return <p className="loading-text">Chargement...</p>;
+  if (!data) {
+    return (
+      <div className="loading-spinner-wrapper">
+        <Image src={o} alt="Chargement..." className="rotating-spinner" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -103,13 +109,13 @@ export default function Dashboard() {
               <a href="/dashboard" className="nav-link">Dashboard</a>
             </li>
             <li className="nav-item">
-              <a href="/parametres" className="nav-link">Parametres</a>
+              <a href="/parametres" className="nav-link">Paramètres</a>
             </li>
           </ul>
         </div>
         <div className="p-6 border-t border-blue-500 flex flex-col items-center">
           <div className="w-8 h-8 bg-blue-300 text-white rounded-full flex items-center justify-center mb-2 text-sm">
-            {adminInfo?.prenom?.charAt(0).toUpperCase() ?? "J"}
+            {adminInfo?.prenom?.charAt(0).toUpperCase() ?? " "}
           </div>
           <p className="text-sm text-center">
             {adminInfo ? `${adminInfo.prenom} ${adminInfo.nom}` : "Chargement..."}
@@ -166,7 +172,7 @@ export default function Dashboard() {
             <div className="dashboard-grid-2">
               <div className="dashboard-card">
                 <p className="dashboard-card-title">Sentiment moyen global</p>
-                <p className="dashboard-card-value">{data.sentimentMoyen.toFixed(2)}</p>
+                <p className="dashboard-card-value">{data?.sentimentMoyen?.toFixed(2) ?? "—"}</p>
               </div>
               <div className="dashboard-card">
                 <p className="dashboard-card-title">Nombre de verbatims analysés</p>
@@ -210,7 +216,7 @@ export default function Dashboard() {
                     </thead>
                     <tbody>
                       {sortData(data.problems, problemsSortKey as string, problemsSortOrder)
-                        .slice(0, 10) // coupe à 10 lignes
+                        //.slice(0, 10) // coupe à 10 lignes
                         .map((p: any, index: number) => (
                         <tr key={index} className="table-row-hover">
                           <td className="font-semibold">{p.etape_parcours}</td>
@@ -289,7 +295,7 @@ export default function Dashboard() {
                     </thead>
                     <tbody>
                       {sortData(data.enquetes, enquetesSortKey as string, enquetesSortOrder)
-                        .slice(0, 10) // coupe à 10 lignes
+                        //.slice(0, 10) // coupe à 10 lignes
                         .map((e: any, index: number) => (
                         <tr key={index} className="table-row-hover">
                           <td>{e.patient?.prenom}</td>

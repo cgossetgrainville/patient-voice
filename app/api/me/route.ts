@@ -12,7 +12,7 @@ export async function GET() {
 
   try {
     const parsed = JSON.parse(info.value);
-    return NextResponse.json({ prenom: parsed.prenom, nom: parsed.nom });
+    return NextResponse.json({ id: parsed.id, prenom: parsed.prenom, nom: parsed.nom });
   } catch {
     return NextResponse.json({ error: "Erreur de session" }, { status: 400 });
   }

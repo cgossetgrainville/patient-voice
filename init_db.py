@@ -1,8 +1,12 @@
 import psycopg2
+import os
 #pip install psycopg2-binary
 
+user_id = os.environ.get("PATIENT_USER_ID", "default")
+dbname = f"db_00{user_id}"
+
 conn = psycopg2.connect(
-    dbname="DB_CD34",
+    dbname=dbname,
     user="avnadmin",
     password="14IYsxzW6e3LMmJVTq0j",
     host="postgresql-4b3783ad-o5359142f.database.cloud.ovh.net",

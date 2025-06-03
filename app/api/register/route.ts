@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
 import bcrypt from "bcrypt";
+import { exec } from "child_process";
 
 // Connexion à PostgreSQL (utilise .env si possible)
 const pool = new Pool({
@@ -24,10 +25,52 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const client = await pool.connect();
 
-    await client.query(
-      "INSERT INTO admin (nom, prenom, email, password) VALUES ($1, $2, $3, $4)",
+    const result = await client.query(
+      "INSERT INTO admin (nom, prenom, email, password) VALUES ($1, $2, $3, $4) RETURNING id",
       [nom, prenom, email, hashedPassword]
     );
+    const userId = result.rows[0].id;
+    
+    const newDbName = `db_00${userId}`;
+    await client.query(`CREATE DATABASE ${newDbName}`);
+
+    const waitForDb = async () => {
+      const testPool = new Pool({
+        user: "avnadmin",
+        host: "postgresql-4b3783ad-o5359142f.database.cloud.ovh.net",
+        database: newDbName,
+        password: "14IYsxzW6e3LMmJVTq0j",
+        port: 20184,
+        ssl: { rejectUnauthorized: false }
+      });
+
+      for (let i = 0; i < 10; i++) {
+        try {
+          await testPool.query("SELECT 1");
+          await testPool.end();
+          return;
+        } catch {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+
+      throw new Error("La base nouvellement créée ne répond pas.");
+    };
+
+    await waitForDb();
+
+    // Initialisation de la base nouvellement créée avec init_db.py
+    await new Promise<void>((resolve, reject) => {
+      exec(`PATIENT_USER_ID=${userId} python3 ./init_db.py`, (error, stdout, stderr) => {
+        if (error) {
+          console.error("Erreur init_db.py:", stderr);
+          reject(error);
+        } else {
+          console.log("init_db.py OK:", stdout);
+          resolve();
+        }
+      });
+    });
 
     client.release();
     return NextResponse.json({ success: true });
