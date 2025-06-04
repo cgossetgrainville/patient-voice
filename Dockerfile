@@ -24,6 +24,7 @@ RUN if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
 # --- 4b. INSTALLER LES TYPES POUR PG ---
 RUN npm install --save-dev @types/pg
 RUN npm install --save-dev @types/fluent-ffmpeg
+RUN npm install --save-dev @types/bcrypt
 
 # --- 5. COPIE DES DEPENDANCES PYTHON ---
 COPY requirements.txt ./
