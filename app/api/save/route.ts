@@ -145,7 +145,6 @@ export async function POST(req: Request) {
 
   const parsedCookies = cookie.parse(rawCookie);
   const sessionRaw = parsedCookies["admin_session_info"];
-  console.log("SESSION RAW :", sessionRaw);
 
   if (!sessionRaw) {
     return NextResponse.json({ error: "Session absente" }, { status: 401 });
@@ -154,7 +153,6 @@ export async function POST(req: Request) {
   let adminId;
   try {
     const parsed = JSON.parse(sessionRaw);
-    console.log("SESSION PARSED :", parsed);
     if (!parsed?.id) {
       console.error("ID manquant dans le cookie :", parsed);
       return NextResponse.json({ error: "ID manquant dans le cookie" }, { status: 401 });

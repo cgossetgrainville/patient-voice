@@ -30,6 +30,8 @@ export default function Dashboard() {
   // États de tri pour Problèmes
   const [problemsSortKey, setProblemsSortKey] = useState("indice_priorite");
   const [problemsSortOrder, setProblemsSortOrder] = useState<"asc" | "desc">("desc");
+  // Filtre pour état d'action
+  const [etatFilter, setEtatFilter] = useState<string>("Tous");
 
   // États de tri pour Enquêtes
   const [enquetesSortKey, setEnquetesSortKey] = useState("score_satisfaction_global");
@@ -187,36 +189,48 @@ export default function Dashboard() {
                   <table className="problems-table">
                     <thead>
                       <tr>
-                        <th onClick={() => {
-                          setProblemsSortKey("etape_parcours");
-                          setProblemsSortOrder(problemsSortKey === "etape_parcours" && problemsSortOrder === "asc" ? "desc" : "asc");
-                        }}>
+                        <th
+                          onClick={() => {
+                            setProblemsSortKey("etape_parcours");
+                            setProblemsSortOrder(problemsSortKey === "etape_parcours" && problemsSortOrder === "asc" ? "desc" : "asc");
+                          }}
+                        >
                           Étape du parcours {problemsSortKey === "etape_parcours" ? (problemsSortOrder === "asc" ? "↑" : "↓") : ""}
                         </th>
-                        <th onClick={() => {
-                          setProblemsSortKey("resume_verbatim");
-                          setProblemsSortOrder(problemsSortKey === "resume_verbatim" && problemsSortOrder === "asc" ? "desc" : "asc");
-                        }}>
-                          Résumé du verbatim {problemsSortKey === "resume_verbatim" ? (problemsSortOrder === "asc" ? "↑" : "↓") : ""}
+                        <th>
+                          Résumé du verbatim
                         </th>
-                        <th className="text-center" onClick={() => {
-                          setProblemsSortKey("indice_priorite");
-                          setProblemsSortOrder(problemsSortKey === "indice_priorite" && problemsSortOrder === "asc" ? "desc" : "asc");
-                        }}>
+                        <th
+                          className="text-center"
+                          onClick={() => {
+                            setProblemsSortKey("indice_priorite");
+                            setProblemsSortOrder(problemsSortKey === "indice_priorite" && problemsSortOrder === "asc" ? "desc" : "asc");
+                          }}
+                        >
                           Indice de priorité {problemsSortKey === "indice_priorite" ? (problemsSortOrder === "asc" ? "↑" : "↓") : ""}
                         </th>
-                        <th onClick={() => {
-                          setProblemsSortKey("recommandation");
-                          setProblemsSortOrder(problemsSortKey === "recommandation" && problemsSortOrder === "asc" ? "desc" : "asc");
-                        }}>
-                          Recommandation {problemsSortKey === "recommandation" ? (problemsSortOrder === "asc" ? "↑" : "↓") : ""}
+                        <th>
+                          Recommandation
                         </th>
-                        <th className="text-center">État</th>
+                        <th className="text-center">
+                          <div style={{ justifyContent: "space-between", alignItems: "center" }}>
+                            <select
+                              id="text-center"
+                              value={etatFilter}
+                              onChange={(e) => setEtatFilter(e.target.value)}
+                            >
+                              <option value="Tous">État</option>
+                              <option value="À faire">À faire</option>
+                              <option value="En cours">En cours</option>
+                              <option value="Résolu">Résolu</option>
+                            </select>
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {sortData(data.problems, problemsSortKey as string, problemsSortOrder)
-                        //.slice(0, 10) // coupe à 10 lignes
+                        .filter((p: any) => etatFilter === "Tous" || p.etat_action === etatFilter)
                         .map((p: any, index: number) => (
                         <tr key={index} className="table-row-hover">
                           <td className="font-semibold">{p.etape_parcours}</td>

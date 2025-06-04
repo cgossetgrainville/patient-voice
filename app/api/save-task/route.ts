@@ -1,5 +1,3 @@
-
-
 import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -45,7 +43,10 @@ export async function POST(req: Request) {
 
   await fetch("http://localhost:3000/api/save", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      cookie: req.headers.get("cookie") || "",
+    },
     body: JSON.stringify({
       nom,
       prenom,

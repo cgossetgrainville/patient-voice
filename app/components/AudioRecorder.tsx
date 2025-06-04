@@ -1,4 +1,3 @@
-// AudioRecorder.tsx
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -166,7 +165,7 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
     console.log("✅ Résultat de /api/save :", data);
     if (data.success) {
       console.log("🎯 Enregistrement en base réussi");
-      //alert("Enquete de Satisfaction enregistrée ✅");
+      alert("Enquete de Satisfaction enregistrée ✅");
       setCommentaire("");
       setTranscription("");
     } else {
@@ -274,41 +273,34 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
                 const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
                 const cleanPatientName = `${prenomPart}-${nomPart}`;
 
-                const cleanRes = await fetch("/api/clean", {
+                const res = await fetch("/api/save-task", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    text: transcription,
-                    prenom: prenomPart,
-                    nom: nomPart,
-                  }),
-                });
-                const cleanData = await cleanRes.json();
-
-                const rapportRes = await fetch("/api/rapport", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    text: transcription,
-                    prenom: prenomPart,
-                    nom: nomPart,
-                  }),
-                });
-                const rapportData = await rapportRes.json();
-
-                const tableRes = await fetch("/api/table", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    text: transcription,
+                    transcription,
                     patientName: cleanPatientName,
                   }),
+                  keepalive: true,
                 });
-                const tableData = await tableRes.blob();
+                const result = await res.json();
 
-                await handleSave(cleanData, tableData);
-
-                setIsGeneratingTable(false);
+                if (result.success) {
+                  if (document.visibilityState === "visible") {
+                    alert("Enquete de Satisfaction enregistrée ✅");
+                  } else if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("Enquête de Satisfaction enregistrée ✅");
+                  } else if ("Notification" in window && Notification.permission !== "denied") {
+                    Notification.requestPermission().then((permission) => {
+                      if (permission === "granted") {
+                        new Notification("Enquête de Satisfaction enregistrée ✅");
+                      }
+                    });
+                  }
+                  setCommentaire("");
+                  setTranscription("");
+                } else {
+                  alert("Erreur lors de l'enregistrement ❌");
+                }
               }}
               className="btn-pdf"
               disabled={isGeneratingTable || !patientName}

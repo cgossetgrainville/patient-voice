@@ -220,8 +220,12 @@ body {
   word-wrap: break-word;
   font-size: 0.85rem;
 }
+.etat-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.25rem;
+}
 .etat-buttons button {
-  margin: 0 0.25rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
   border: none;
