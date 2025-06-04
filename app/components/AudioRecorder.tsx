@@ -198,12 +198,13 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
             className="stop-record-btn"
             style={{
               position: "absolute",
-              top: "calc(50% - 30px)",
+              top: "calc(50%)",
               left: "calc(50% - 30px)",
               width: 60,
               height: 60,
               cursor: "pointer",
               zIndex: 3,
+              marginBottom: "30px",
             }}
           />
         </div>

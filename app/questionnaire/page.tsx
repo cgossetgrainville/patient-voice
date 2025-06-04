@@ -287,7 +287,7 @@ export default function QuestionnairePage() {
             className="stop-record-btn"
             style={{
               position: "absolute",
-              top: "calc(50% - 30px)",
+              top: "calc(50%)",
               left: "calc(50% - 30px)",
               width: 60,
               height: 60,
