@@ -16,21 +16,21 @@ export async function POST(req: Request) {
 
     const [prenom, nom] = patientName.split("-").map((s: string) => s.trim());
 
-    const cleanRes = await fetch("http://localhost:3000/api/clean", {
+    const cleanRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/clean`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: transcription, prenom, nom }),
     });
     const cleanData = await cleanRes.json();
 
-    const rapportRes = await fetch("http://localhost:3000/api/rapport", {
+    const rapportRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/rapport`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: transcription, prenom, nom }),
     });
     const rapportData = await rapportRes.json();
 
-    const tableRes = await fetch("http://localhost:3000/api/table", {
+    const tableRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/table`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: transcription, patientName }),
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const tablePath = `public/uploads/${prenom}-${nom}-Tableau.pdf`;
     fs.writeFileSync(tablePath, tableBuffer);
 
-    await fetch("http://localhost:3000/api/save", {
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/save`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
