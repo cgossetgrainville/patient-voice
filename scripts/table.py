@@ -44,12 +44,14 @@ if __name__ == "__main__":
 
     csv_lines = lines
         
+    import tempfile
     patient_name = os.getenv("PATIENT_NAME", "default").strip().replace(" ", "_")
-    filename = os.getenv("PDF_FILENAME", f"{patient_name}-Tableau")
-    pdf_filename = f"{filename}.pdf"
-    pdf_path = os.path.join("public", "uploads", pdf_filename)
+    pdf_filename = os.getenv("PDF_FILENAME", f"{patient_name}-Tableau.pdf").strip()
+    if not pdf_filename.endswith(".pdf"):
+        pdf_filename += ".pdf"
+    pdf_path = os.path.join(tempfile.gettempdir(), pdf_filename)
     
-    c = canvas.Canvas(pdf_filename, pagesize=landscape(A4))
+    c = canvas.Canvas(pdf_path, pagesize=landscape(A4))
     width, height = landscape(A4)
     
     c.setFont("Helvetica-Bold", 16)
@@ -116,5 +118,37 @@ if __name__ == "__main__":
 
     # Impression du chemin PDF suivi des données JSON
     import json
+    # S'assurer que le chemin est bien imprimé avec .pdf
+    if not pdf_path.endswith(".pdf"):
+        pdf_path += ".pdf"
     print(pdf_path)
     print(json.dumps(parsed_rows, ensure_ascii=False))
+    print("===END_JSON===")
+
+# --- Téléversement du PDF sur S3 ---
+import boto3
+import sys
+s3_client = boto3.client(
+    's3',
+    endpoint_url="https://s3.eu-west-par.io.cloud.ovh.net/",
+    aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
+    aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
+)
+
+admin_prenom = os.getenv("ADMIN_PRENOM", "").strip()
+admin_nom = os.getenv("ADMIN_NOM", "").strip()
+admin_name = f"{admin_prenom}-{admin_nom}".lower().replace(" ", "_") or "admin"
+s3_key = f"{admin_name}/{pdf_filename}"
+bucket_name = "patient-voice"
+
+s3_client.upload_file(
+    pdf_path,
+    bucket_name,
+    s3_key,
+    ExtraArgs={
+        "ACL": "public-read",
+        "ContentType": "application/pdf",
+        "ContentDisposition": "inline"
+    }
+)
+print(s3_key)

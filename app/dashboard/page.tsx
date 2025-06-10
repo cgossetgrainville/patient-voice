@@ -319,7 +319,13 @@ export default function Dashboard() {
                           <td>
                             <button
                               className="text-blue-600 underline"
-                              onClick={() => window.open(`/uploads/${e.pdf_transcription?.split("/").pop()}`, "_blank", "popup,width=800,height=600")}
+                              onClick={() => {
+                                // Remove any /tmp/ prefix from the s3_key if present
+                                const rawKey = e.pdf_transcription?.replace(/^\/tmp\//, "");
+                                const admin = `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_");
+                                const url = `https://patient-voice.s3.eu-west-par.io.cloud.ovh.net/${admin}/${rawKey}`;
+                                window.open(url, "_blank", "popup,width=800,height=600");
+                              }}
                             >
                               Voir PDF
                             </button>
@@ -327,7 +333,13 @@ export default function Dashboard() {
                           <td>
                             <button
                               className="text-blue-600 underline"
-                              onClick={() => window.open(`/uploads/${e.pdf_tableau?.split("/").pop()}`, "_blank", "popup,width=800,height=600")}
+                             onClick={() => {
+                                // Remove any /tmp/ prefix from the s3_key if present
+                                const rawKey = e.pdf_tableau?.replace(/^\/tmp\//, "");
+                                const admin = `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_");
+                                const url = `https://patient-voice.s3.eu-west-par.io.cloud.ovh.net/${admin}/${rawKey}`;
+                                window.open(url, "_blank", "popup,width=800,height=600");
+                              }}
                             >
                               Voir PDF
                             </button>
@@ -335,7 +347,13 @@ export default function Dashboard() {
                           <td>
                             <button
                               className="text-blue-600 underline"
-                              onClick={() => window.open(`/uploads/${e.pdf_rapport?.split("/").pop()}`, "_blank", "popup,width=800,height=600")}
+                              onClick={() => {
+                                // Remove any /tmp/ prefix from the s3_key if present
+                                const rawKey = e.pdf_rapport?.replace(/^\/tmp\//, "");
+                                const admin = `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_");
+                                const url = `https://patient-voice.s3.eu-west-par.io.cloud.ovh.net/${admin}/${rawKey}`;
+                                window.open(url, "_blank", "popup,width=800,height=600");
+                              }}
                             >
                               Voir PDF
                             </button>

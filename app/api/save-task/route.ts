@@ -3,6 +3,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs";
+import { cookies } from "next/headers";
 
 const execAsync = promisify(exec);
 
@@ -15,32 +16,41 @@ export async function POST(req: Request) {
     }
 
     const [prenom, nom] = patientName.split("-").map((s: string) => s.trim());
+    const cookieStore = await cookies();
+    const sessionInfo = cookieStore.get("admin_session_info")?.value;
+    let adminPrenom = "admin";
+    let adminNom = "default";
+    if (sessionInfo) {
+      try {
+        const parsed = JSON.parse(sessionInfo);
+        adminPrenom = parsed.prenom || adminPrenom;
+        adminNom = parsed.nom || adminNom;
+      } catch (e) {
+        console.warn("⚠️ Cookie admin_session_info illisible :", e);
+      }
+    }
 
     const cleanRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/clean`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: transcription, prenom, nom }),
-    });
+      body: JSON.stringify({ text: transcription, prenom, nom, adminPrenom, adminNom }),
+      });
     const cleanData = await cleanRes.json();
 
     const rapportRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/rapport`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: transcription, prenom, nom }),
+      body: JSON.stringify({ text: transcription, prenom, nom, adminPrenom, adminNom  }),
     });
     const rapportData = await rapportRes.json();
 
     const tableRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/table`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: transcription, patientName }),
+      body: JSON.stringify({ text: transcription, patientName, adminPrenom, adminNom }),
     });
-    const tableData = await tableRes.blob();
-
-    const formData = new FormData();
-    const tableBuffer = Buffer.from(await tableData.arrayBuffer());
-    const tablePath = `public/uploads/${prenom}-${nom}-Tableau.pdf`;
-    fs.writeFileSync(tablePath, tableBuffer);
+    const tableJson = await tableRes.json();
+    const s3TablePath = tableJson.pdfPath;
 
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/save`, {
       method: "POST",
@@ -56,9 +66,9 @@ export async function POST(req: Request) {
         commentaire_pro: "",
         transcription_corrigee: cleanData.text,
         pdf_transcription: cleanData.pdfPath,
-        pdf_tableau: `/uploads/${prenom}-${nom}-Tableau.pdf`,
+        pdf_tableau: s3TablePath,
         pdf_rapport: rapportData.pdfPath,
-        tableau: cleanData.csv,
+        tableau: JSON.stringify(tableJson.rows || []),
       }),
     });
 

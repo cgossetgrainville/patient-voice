@@ -6,3 +6,4 @@ webrtcvad       # pour le découpeur de silences
 openai
 psycopg2
 reportlab
+boto3

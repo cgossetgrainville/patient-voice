@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     patient_name = os.getenv("PATIENT_NAME", "default").strip().replace(" ", "_")
     pdf_filename = f"{patient_name}-Transcription.pdf"
-    pdf_path = os.path.join("public", "uploads", pdf_filename)
+    pdf_path = f"/tmp/{pdf_filename}"
 
     # Print path FIRST so route.ts can extract it
     print(pdf_path)
@@ -92,3 +92,33 @@ if __name__ == "__main__":
             elements.append(Paragraph(line.strip(), dialogue_style))
 
     doc.build(elements)
+
+    import boto3
+
+    print("✅ Initialisation du client S3…")
+    s3_client = boto3.client(
+        's3',
+        endpoint_url="https://s3.eu-west-par.io.cloud.ovh.net/",
+        aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
+        aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
+    )
+
+    admin_prenom = os.getenv("ADMIN_PRENOM", "").strip()
+    admin_nom = os.getenv("ADMIN_NOM", "").strip()
+    admin_name = f"{admin_prenom}-{admin_nom}".lower().replace(" ", "_") or "admin"
+    s3_key = f"{admin_name}/{pdf_filename}"    
+    bucket_name = "patient-voice"
+
+    print(f"📁 Téléversement du fichier {pdf_path} vers {bucket_name}/{s3_key}…")
+    s3_client.upload_file(
+        pdf_path,
+        bucket_name,
+        s3_key,
+        ExtraArgs={
+            "ACL": "public-read",
+            "ContentType": "application/pdf",
+            "ContentDisposition": "inline"
+        }
+    )
+    print("✅ Téléversement terminé avec succès.")
+    print(s3_key)

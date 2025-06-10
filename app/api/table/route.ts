@@ -2,59 +2,33 @@
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
+import { cookies } from "next/headers";
+
 
 export async function POST(req: NextRequest) : Promise<Response> {
-  const { text, patientName } = await req.json();
-  
+  const { text, patientName, adminPrenom, adminNom} = await req.json();
+  const adminName = `${adminPrenom}-${adminNom}`.toLowerCase().replace(/\s+/g, "_") || "admin";
+
   if (!text) {
     return NextResponse.json({ error: "Aucun texte fourni" }, { status: 400 });
   }
 
   const trimmed = text.length > 8000 ? text.slice(0, 8000) : text;
 
-  // Étape 1 : Appeler clean.py
-  const cleanedText = await new Promise<string>((resolve, reject) => {
-    const clean = spawn("python3", ["./scripts/clean.py"], {
-      env: { ...process.env, PATIENT_NAME: patientName }
-    });
-    let output = "";
-    let error = "";
-
-    clean.stdout.on("data", (data) => {
-      output += data.toString();
-    });
-
-    clean.stderr.on("data", (data) => {
-      error += data.toString();
-      console.error("Erreur clean.py:", data.toString());
-    });
-
-    clean.on("close", (code) => {
-      if (code !== 0) {
-        reject(`Erreur dans clean.py : ${error}`);
-      } else {
-        resolve(output.trim());
-      }
-    });
-
-    clean.stdin.write(trimmed);
-    clean.stdin.end();
-  }).catch((err) => {
-    console.error(err);
-    return null;
-  });
-
-  if (!cleanedText) {
-    return NextResponse.json({ error: "Erreur dans clean.py" }, { status: 500 });
-  }
+  const cleanedText = text;
 
   // Étape 2 : Appeler table.py avec le texte nettoyé
   return new Promise((resolve) => {
     const safeName = (patientName || "default").replace(/\s*-\s*/g, "-").replace(/\s+/g, "_");
-    const filename = `public/uploads/${safeName}-Tableau`;
+    const filename = `${safeName}-Tableau`;
 
     const table = spawn("python3", ["./scripts/table.py"], {
-      env: { ...process.env, PDF_FILENAME: filename }
+      env: { ...process.env, 
+        PDF_FILENAME: filename,
+        ADMIN_NAME: adminName,
+        ADMIN_PRENOM: adminPrenom,
+        ADMIN_NOM: adminNom, 
+      }
     });
     let output = "";
     let error = "";
@@ -74,18 +48,24 @@ export async function POST(req: NextRequest) : Promise<Response> {
       } else {
         // On suppose que la première ligne de output est le chemin du PDF, le reste est le JSON
         const lines = output.trim().split("\n");
-        const pdfLine = lines[0] || "";
-        const pdfPathMatch = pdfLine.match(/([^\s]+\.pdf)$/i);
-        const pdfPath = pdfPathMatch ? pdfPathMatch[1].trim() : "";
-        let rows = [];
-        try {
-          if (lines.length > 1) {
-            rows = JSON.parse(lines.slice(1).join("\n"));
+        const endIndex = lines.findIndex(line => line.trim() === "===END_JSON===");
+        const firstLine = lines[0];
+        const pdfPathMatch = firstLine.match(/^(.+\.pdf)$/);
+        const pdfPath = pdfPathMatch ? pdfPathMatch[1].trim() : null;
+
+        if (!pdfPath) {
+          resolve(NextResponse.json({ error: "PDF path not found in table output" }, { status: 500 }));
+        } else {
+          const jsonString = lines.slice(1, endIndex).join("\n");
+          let rows = [];
+          try {
+            rows = JSON.parse(jsonString);
+          } catch (e) {
+            resolve(NextResponse.json({ error: "Impossible de parser les lignes JSON de table.py" }, { status: 500 }));
+            return;
           }
-        } catch (e) {
-          rows = [];
+          resolve(NextResponse.json({ pdfPath, rows }));
         }
-        resolve(NextResponse.json({ pdfPath, rows }));
       }
     });
 

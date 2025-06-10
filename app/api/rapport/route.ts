@@ -2,10 +2,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
+import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const { text, prenom, nom } = await req.json();
+  const { adminPrenom, adminNom, text, prenom, nom } = await req.json();
   const patientName = `${prenom}-${nom}`;
+  const adminName = `${adminPrenom}-${adminNom}`.toLowerCase().replace(/\s+/g, "_") || "admin";
+
 
   if (!text) {
     return NextResponse.json({ error: "Aucun texte fourni" }, { status: 400 });
@@ -16,6 +19,9 @@ export async function POST(req: NextRequest): Promise<Response> {
       env: {
         ...process.env,
         PATIENT_NAME: patientName,
+        ADMIN_NAME: adminName,
+        ADMIN_PRENOM: adminPrenom,
+        ADMIN_NOM: adminNom,
       },
     });
 

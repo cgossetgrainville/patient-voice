@@ -54,54 +54,11 @@ function cleanAndGeneratePDF(rawText: string, patientName: string): Promise<{ te
   });
 }
 
-function generateTablePDF(rawText: string, patientName: string): Promise<{ pdfPath: string; rows: any[] }> {
-  return new Promise((resolve, reject) => {
-    const filename = `public/uploads/${patientName}-Tableau`;
-    const python = spawn("python3", ["./scripts/table.py"], {
-      env: { ...process.env, PDF_FILENAME: filename },
-    });
-    let output = "";
-    let error = "";
-
-    python.stdout.on("data", (data) => {
-      output += data.toString();
-    });
-
-    python.stderr.on("data", (data) => {
-      error += data.toString();
-    });
-
-    python.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`table.py error: ${error}`));
-      } else {
-        const lines = output.trim().split("\n");
-        const firstLine = lines[0];
-        const pdfPathMatch = firstLine.match(/^(.+\.pdf)$/);
-        const pdfPath = pdfPathMatch ? pdfPathMatch[1].trim() : null;
-        if (!pdfPath) {
-          reject(new Error("PDF path not found in table output"));
-        } else {
-          const jsonString = lines.slice(1).join("\n");
-          try {
-            const rows = JSON.parse(jsonString);
-            resolve({ pdfPath, rows });
-          } catch (err) {
-            reject(new Error("Impossible de parser les lignes JSON de table.py"));
-          }
-        }
-      }
-    });
-
-    python.stdin.write(rawText);
-    python.stdin.end();
-  });
-}
 
 // Ajout du rapport PDF (appel à rapport.py)
 function generateRapportPDF(rawText: string, patientName: string): Promise<{ pdfPath: string }> {
   return new Promise((resolve, reject) => {
-    const filename = `public/uploads/${patientName}-Rapport`;
+    const filename = `${patientName}-Rapport`;
     const python = spawn("python3", ["./scripts/rapport.py"], {
       env: { ...process.env, PDF_FILENAME: filename, PATIENT_NAME: patientName },
     });
@@ -193,10 +150,11 @@ export async function POST(req: Request) {
 
     const patientName = `${prenom}-${nom}`.replace(/\s+/g, "_");
 
-    const { text: cleanedText, pdfPath } = await cleanAndGeneratePDF(transcription, patientName);
-    const { pdfPath: pdfTablePath, rows } = await generateTablePDF(transcription, patientName);
-    // Appel du script rapport.py pour générer le rapport PDF
-    const { pdfPath: pdfRapportPath } = await generateRapportPDF(transcription, patientName);
+    const cleanedText = body.transcription_corrigee;
+    const pdfPath = body.pdf_transcription;
+    // Remplacement: on récupère le chemin du PDF tableau et les lignes depuis le body
+    const pdfTablePath = body.pdf_tableau;
+    const rows = JSON.parse(body.tableau || "[]");
 
     const detailsToInsert = (rows || []).map((row: any) => ({
       etape_parcours: row.etape_parcours,
@@ -227,7 +185,7 @@ export async function POST(req: Request) {
         label_satisfaction_global, nombre_mots, commentaire_pro, patient_id
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
       [
-        cleanedText, tableau, pdfPath, pdfTablePath, pdfRapportPath, duree, "interface",
+        cleanedText, tableau, pdfPath, pdfTablePath, body.pdf_rapport, duree, "interface",
         moyenne, label, cleanedText.split(" ").length, commentaire_pro, patient.id
       ],
       pool

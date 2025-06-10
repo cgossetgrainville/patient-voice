@@ -4,6 +4,7 @@
 /.vscode
 /uploads
 *.pdf
+aws
 
 # dependencies
 git rm -r --cached node_modules/.pnp
