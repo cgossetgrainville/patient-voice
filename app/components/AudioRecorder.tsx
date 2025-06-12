@@ -168,6 +168,11 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
       alert("Enquete de Satisfaction enregistrée ✅");
       setCommentaire("");
       setTranscription("");
+      setAudioDuration(null);
+      const fileInput = document.querySelector(".upload-input") as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
+      const nameInput = document.getElementById("patientName") as HTMLInputElement;
+      if (nameInput) nameInput.value = "";
     } else {
       alert("Erreur lors de l'enregistrement ❌");
     }
@@ -257,7 +262,15 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
           
           <div className="action-buttons">
             <button
-              onClick={() => setTranscription("")}
+              onClick={() => {
+                setTranscription("");
+                setCommentaire("");
+                setAudioDuration(null);
+                const fileInput = document.querySelector(".upload-input") as HTMLInputElement;
+                if (fileInput) fileInput.value = "";
+                const nameInput = document.getElementById("patientName") as HTMLInputElement;
+                if (nameInput) nameInput.value = "";
+              }}
               className="btn-delete"
             >
               Supprimer
@@ -299,6 +312,11 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
                   }
                   setCommentaire("");
                   setTranscription("");
+                  setAudioDuration(null);
+                  const fileInput = document.querySelector(".upload-input") as HTMLInputElement;
+                  if (fileInput) fileInput.value = "";
+                  const nameInput = document.getElementById("patientName") as HTMLInputElement;
+                  if (nameInput) nameInput.value = "";
                 } else {
                   alert("Erreur lors de l'enregistrement ❌");
                 }

@@ -17,8 +17,9 @@ const bucketName = "patient-voice";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const prenom = searchParams.get("prenom")?.trim().toLowerCase().replace(/\s+/g, "_");
-  const nom = searchParams.get("nom")?.trim().toLowerCase().replace(/\s+/g, "_");
+  const prenom = searchParams.get("prenom")?.trim();
+  const nom = searchParams.get("nom")?.trim();
+
   const key = `${prenom}-${nom}/prompts.json`;
 
   try {

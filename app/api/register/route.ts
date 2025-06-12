@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     const promptsPath = path.join(process.cwd(), "data", "prompts.json");
     const promptsContent = fs.readFileSync(promptsPath);
 
-    const s3Key = `${prenom.toLowerCase()}-${prenom.toLowerCase()}/prompts.json`;
+    const s3Key = `${prenom}-${nom}/prompts.json`;
 
     await s3.send(
       new PutObjectCommand({

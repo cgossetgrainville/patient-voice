@@ -283,7 +283,7 @@ export default function Dashboard() {
                 <p className="problems-title">Historique des enquêtes de satisfaction</p>
                 <input
                   type="text"
-                  placeholder="Rechercher un patient (nom ou prénom)"
+                  placeholder="Recherche patient"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="search-input"

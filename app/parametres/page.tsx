@@ -80,7 +80,7 @@ export default function ParametresPage() {
         </div>
         <div className="p-6 border-t border-blue-500 flex flex-col items-center">
           <div className="w-8 h-8 bg-blue-300 text-white rounded-full flex items-center justify-center mb-2 text-sm">
-            {adminInfo?.prenom?.charAt(0).toUpperCase() ?? "J"}
+            {adminInfo?.prenom?.charAt(0).toUpperCase() ?? ""}
           </div>
           <p className="text-sm text-center">
             {adminInfo ? `${adminInfo.prenom} ${adminInfo.nom}` : "Chargement..."}
@@ -143,14 +143,6 @@ export default function ParametresPage() {
                 value={prompts.table_prompt}
                 onChange={e => setPrompts({ ...prompts, table_prompt: e.target.value })}
               />
-              
-              <button
-                onClick={handleSave}
-                className="btn-pdf"
-                disabled={saving}
-              >
-                {saving ? "Enregistrement…" : "Enregistrer les modifications"}
-              </button>
               <button
                 onClick={async () => {
                   const confirmed = window.confirm("Êtes-vous sûr de vouloir réinitialiser les prompts ?");
@@ -170,9 +162,20 @@ export default function ParametresPage() {
                   }
                 }}
                 className="btn-delete"
+                style={{ marginRight: "1rem" }}
               >
                 Réinitialiser les prompts
               </button>
+              
+              <button
+                onClick={handleSave}
+                className="btn-pdf"
+                style={{ marginLeft: "1rem" }}
+                disabled={saving}
+              >
+                {saving ? "Enregistrement…" : "Enregistrer les modifications"}
+              </button>
+            
             </div>
           ) : (
             <p>Chargement des prompts…</p>

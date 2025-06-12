@@ -20,7 +20,7 @@ def generate_patient_table(verbatim: str) -> str:
         model="Meta-Llama-3_3-70B-Instruct",
         messages=[
             {"role": "system", "content": "Tu es un assistant médical spécialisé dans l’analyse de la satisfaction patient."},
-            {"role": "user", "content": prompt_template.format(verbatim=verbatim)}
+            {"role": "user", "content": prompt_template.format(etapes=prompts["etapes_prompt"], verbatim=verbatim)}
         ],
         temperature=0.3,
         max_tokens=1800
@@ -99,22 +99,31 @@ if __name__ == "__main__":
     c.save()
 
     # Relecture CSV pour extraction structurée
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
     reader = csv.reader(io.StringIO(csv_content), strict=True)
     headers = next(reader)  # skip headers
     parsed_rows = []
+    line_index = 1
     for row in reader:
         if len(row) == 9:
-            parsed_rows.append({
-                "etape_parcours": row[0].strip(),
-                "score_satisfaction": int(row[1].strip().replace('"', '')),
-                "resume_verbatim": row[2].strip(),
-                "sentiment": row[3].strip(),
-                "recommandation": row[4].strip(),
-                "score_impact": int(row[5].strip().replace('"', '')),
-                "score_faisabilite": int(row[6].strip().replace('"', '')),
-                "indice_priorite": row[7].strip().replace('"', ''),
-                "etat_action": row[8].strip(),
-            })
+            try:
+                parsed_rows.append({
+                    "etape_parcours": row[0].strip(),
+                    "score_satisfaction": int(row[1].strip().replace('"', '')),
+                    "resume_verbatim": row[2].strip(),
+                    "sentiment": row[3].strip(),
+                    "recommandation": row[4].strip(),
+                    "score_impact": int(row[5].strip().replace('"', '')),
+                    "score_faisabilite": int(row[6].strip().replace('"', '')),
+                    "indice_priorite": row[7].strip().replace('"', ''),
+                    "etat_action": row[8].strip(),
+                })
+            except Exception as e:
+                logging.warning(f"[Ligne {line_index}] Erreur de parsing: {e} - Ligne ignorée: {row}")
+            finally:
+                line_index += 1
 
     # Impression du chemin PDF suivi des données JSON
     import json
@@ -141,6 +150,9 @@ admin_name = f"{admin_prenom}-{admin_nom}".lower().replace(" ", "_") or "admin"
 s3_key = f"{admin_name}/{pdf_filename}"
 bucket_name = "patient-voice"
 
+if not os.path.isfile(pdf_path):
+    logging.error(f"PDF non trouvé : {pdf_path}")
+    sys.exit(1)
 s3_client.upload_file(
     pdf_path,
     bucket_name,
@@ -151,4 +163,5 @@ s3_client.upload_file(
         "ContentDisposition": "inline"
     }
 )
+logging.info(f"PDF uploadé avec succès sur S3 : {s3_key}")
 print(s3_key)
