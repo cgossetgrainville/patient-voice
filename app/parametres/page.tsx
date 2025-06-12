@@ -33,12 +33,7 @@ export default function ParametresPage() {
 
   useEffect(() => {
     if (adminInfo) {
-      fetch("/api/prompts", {
-        headers: {
-          "x-admin-prenom": adminInfo.prenom,
-          "x-admin-nom": adminInfo.nom,
-        },
-      })
+      fetch(`/api/prompts?prenom=${adminInfo.prenom}&nom=${adminInfo.nom}`)
         .then(res => res.ok ? res.json() : null)
         .then(setPrompts);
     }

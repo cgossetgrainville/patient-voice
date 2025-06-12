@@ -16,8 +16,9 @@ const s3 = new S3Client({
 const bucketName = "patient-voice";
 
 export async function GET(req: NextRequest) {
-  const prenom = req.headers.get("x-admin-prenom")?.trim().toLowerCase().replace(" ", "_");
-  const nom = req.headers.get("x-admin-nom")?.trim().toLowerCase().replace(" ", "_");
+  const { searchParams } = new URL(req.url);
+  const prenom = searchParams.get("prenom")?.trim().toLowerCase().replace(/\s+/g, "_");
+  const nom = searchParams.get("nom")?.trim().toLowerCase().replace(/\s+/g, "_");
   const key = `${prenom}-${nom}/prompts.json`;
 
   try {
