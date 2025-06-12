@@ -203,14 +203,14 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
               width: 60,
               height: 60,
               cursor: "pointer",
-              zIndex: 3,
+              zIndex: 2,
               marginBottom: "30px",
             }}
           />
         </div>
       )}
 
-      <div className="upload-label-wrapper">
+      <div style={{ marginTop: isRecording ? "100px" : "40px" }} className="upload-label-wrapper">
         <label className="upload-label">
           <input
             type="file"

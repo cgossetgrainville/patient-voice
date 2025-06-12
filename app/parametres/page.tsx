@@ -12,7 +12,13 @@ import "../homepage.css";
 
 export default function ParametresPage() {
   const [adminInfo, setAdminInfo] = useState<{ prenom: string; nom: string } | null>(null);
-  const [prompts, setPrompts] = useState<{ cleaning_prompt: string; rapport_prompt: string; table_prompt: string } | null>(null);
+  const [prompts, setPrompts] = useState<{
+    cleaning_prompt: string;
+    rapport_prompt: string;
+    table_prompt: string;
+    questionnaire_questions: string;
+    etapes_prompt: string; // <- Ajouté
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -23,11 +29,20 @@ export default function ParametresPage() {
         if (!data) router.push("/");
         else setAdminInfo(data);
       });
-
-    fetch("/api/prompts")
-      .then(res => res.ok ? res.json() : null)
-      .then(setPrompts);
   }, []);
+
+  useEffect(() => {
+    if (adminInfo) {
+      fetch("/api/prompts", {
+        headers: {
+          "x-admin-prenom": adminInfo.prenom,
+          "x-admin-nom": adminInfo.nom,
+        },
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(setPrompts);
+    }
+  }, [adminInfo]);
 
   const handleLogout = async () => {
     await fetch("/api/logout");
@@ -38,8 +53,12 @@ export default function ParametresPage() {
     setSaving(true);
     await fetch("/api/prompts", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(prompts)
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-prenom": adminInfo?.prenom || "",
+        "x-admin-nom": adminInfo?.nom || "",
+      },
+      body: JSON.stringify(prompts),
     });
     setSaving(false);
     alert("Prompts mis à jour avec succès !");
@@ -94,6 +113,20 @@ export default function ParametresPage() {
 
           {prompts ? (
             <div>
+              <div style={{ fontSize: "1rem", fontWeight: "bold" }}>Prompt des questions</div>
+              <textarea
+                className="edit-textarea"
+                style={{ marginBottom: "1rem" }}
+                value={prompts.questionnaire_questions}
+                onChange={e => setPrompts({ ...prompts, questionnaire_questions: e.target.value })}
+              />
+              <div style={{ fontSize: "1rem", fontWeight: "bold" }}>Étape du parcours</div>
+              <textarea
+                className="edit-textarea"
+                style={{ marginBottom: "1rem" }}
+                value={prompts.etapes_prompt}
+                onChange={e => setPrompts({ ...prompts, etapes_prompt: e.target.value })}
+              />
               <div style={{ fontSize: "1rem", fontWeight: "bold" }}>Prompt de nettoyage</div>
               <textarea
                 className="edit-textarea"
@@ -115,12 +148,35 @@ export default function ParametresPage() {
                 value={prompts.table_prompt}
                 onChange={e => setPrompts({ ...prompts, table_prompt: e.target.value })}
               />
+              
               <button
                 onClick={handleSave}
                 className="btn-pdf"
                 disabled={saving}
               >
                 {saving ? "Enregistrement…" : "Enregistrer les modifications"}
+              </button>
+              <button
+                onClick={async () => {
+                  const confirmed = window.confirm("Êtes-vous sûr de vouloir réinitialiser les prompts ?");
+                  if (!confirmed) return;
+
+                  const res = await fetch("/api/prompts/reset", {
+                    method: "POST",
+                    headers: {
+                      "x-admin-prenom": adminInfo?.prenom || "",
+                      "x-admin-nom": adminInfo?.nom || "",
+                    },
+                  });
+                  if (res.ok) {
+                    location.reload();
+                  } else {
+                    alert("Échec de la réinitialisation.");
+                  }
+                }}
+                className="btn-delete"
+              >
+                Réinitialiser les prompts
               </button>
             </div>
           ) : (

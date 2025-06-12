@@ -62,6 +62,7 @@ export async function GET() {
   const themes = await query(
     `SELECT etape_parcours AS label, COUNT(*) AS count, AVG(score_satisfaction)::float AS sentiment
      FROM detail_satisfaction
+     WHERE etape_parcours != 'Expérience globale'
      GROUP BY etape_parcours`
   );
 
@@ -69,7 +70,7 @@ export async function GET() {
   const problems = await query(
     `SELECT id, etape_parcours, resume_verbatim, indice_priorite, recommandation, etat_action
      FROM detail_satisfaction
-     WHERE sentiment = 'NÉGATIF'
+     WHERE sentiment = 'NÉGATIF' AND etape_parcours != 'Expérience globale'
      ORDER BY indice_priorite DESC`
   );
 

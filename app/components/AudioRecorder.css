@@ -186,7 +186,7 @@
 
 .record-smoke-bg {
   position: absolute;
-  top: 50%;
+  top: calc(50% + 30px);
   left: 50%;
   width: 150px;
   height: 150px;
@@ -201,6 +201,7 @@
 .record-smoke-bg.secondary {
   width: 200px;
   height: 200px;
+  top: calc(50% + 30px);
   background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 20%, transparent 80%);
   animation: smoke-pulse-2 2.8s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
   mix-blend-mode: screen;

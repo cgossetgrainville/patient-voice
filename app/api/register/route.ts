@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { Pool } from "pg";
 import bcrypt from "bcrypt";
 import { exec } from "child_process";
+import fs from "fs";
+import path from "path";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 // Connexion à PostgreSQL (utilise .env si possible)
 const pool = new Pool({
@@ -71,6 +74,29 @@ export async function POST(req: Request) {
         }
       });
     });
+
+    const s3 = new S3Client({
+      region: "eu-west-par",
+      endpoint: "https://s3.eu-west-par.io.cloud.ovh.net",
+      credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY || "",
+        secretAccessKey: process.env.S3_SECRET_KEY || "",
+      },
+    });
+
+    const promptsPath = path.join(process.cwd(), "data", "prompts.json");
+    const promptsContent = fs.readFileSync(promptsPath);
+
+    const s3Key = `${prenom.toLowerCase()}-${prenom.toLowerCase()}/prompts.json`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: "patient-voice",
+        Key: s3Key,
+        Body: promptsContent,
+        ContentType: "application/json",
+      })
+    );
 
     client.release();
     return NextResponse.json({ success: true });

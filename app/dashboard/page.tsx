@@ -36,6 +36,7 @@ export default function Dashboard() {
   // États de tri pour Enquêtes
   const [enquetesSortKey, setEnquetesSortKey] = useState("score_satisfaction_global");
   const [enquetesSortOrder, setEnquetesSortOrder] = useState<"asc" | "desc">("desc");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fonction de tri générique
   function sortData<T>(arr: T[], key: keyof T, order: "asc" | "desc") {
@@ -140,13 +141,19 @@ export default function Dashboard() {
                   <LineChart data={data.satisfactionParJour} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" tickFormatter={str => {
-                      // str: "YYYY-MM-DD" → "DD/MM"
                       if (!str) return '';
                       const [yyyy, mm, dd] = str.split("-");
                       return `${dd}/${mm}`;
                     }} />
                     <YAxis domain={[0, 10]} />
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value) => (typeof value === "number" ? value.toFixed(1) : value)}
+                      labelFormatter={(label) => {
+                        if (!label) return '';
+                        const [yyyy, mm, dd] = label.split("-");
+                        return `${dd}/${mm}/${yyyy}`;
+                      }}
+                    />
                     <Legend />
                     <Line type="monotone" dataKey="moyenne" stroke="#1d4ed8" strokeWidth={3} name="Score moyen" />
                   </LineChart>
@@ -163,7 +170,7 @@ export default function Dashboard() {
                       width={150}
                       tick={{ fontSize: 12, fill: '#111827' }}
                     />
-                    <Tooltip />
+                    <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(1) : value)} />
                     <Legend />
                     <Bar dataKey="sentiment" fill="#1d4ed8" name="Score moyen" />
                   </BarChart>
@@ -274,6 +281,14 @@ export default function Dashboard() {
             {data.enquetes && data.enquetes.length > 0 && (
               <div className="dashboard-card">
                 <p className="problems-title">Historique des enquêtes de satisfaction</p>
+                <input
+                  type="text"
+                  placeholder="Rechercher un patient (nom ou prénom)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                  style={{ marginBottom: "1rem", padding: "0.5rem", width: "100%", maxWidth: "150px", borderRadius: "10px", border: "1px solid #ccc" }}
+                />
                 <div className="problems-table-wrapper">
                   <table className="problems-table">
                     <thead>
@@ -309,6 +324,13 @@ export default function Dashboard() {
                     </thead>
                     <tbody>
                       {sortData(data.enquetes, enquetesSortKey as string, enquetesSortOrder)
+                        .filter((e: any) => {
+                          const query = searchQuery.toLowerCase();
+                          return (
+                            e.patient?.prenom?.toLowerCase().includes(query) ||
+                            e.patient?.nom?.toLowerCase().includes(query)
+                          );
+                        })
                         //.slice(0, 10) // coupe à 10 lignes
                         .map((e: any, index: number) => (
                         <tr key={index} className="table-row-hover">

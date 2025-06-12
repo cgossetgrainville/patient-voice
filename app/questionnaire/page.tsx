@@ -10,18 +10,8 @@ import logo2 from "../logo/logo2.png";
 
 //Users/m.mur/Patient Voice V2/patient-voice-app/app/dashboard/dashboard.css
 
-
-const questions = [
-  "1. À votre arrivée à l’hôpital, comment cela s’est-il passé ?",
-  "2. Une fois pris en charge par l’équipe médicale, comment s’est passée cette phase ?",
-  "3. Avez-vous toujours su où vous en étiez dans votre prise en charge ?",
-  "4. Concernant la douleur et le confort, comment cela s’est-il passé ?",
-  "5. Est-ce que les repas vous ont convenu ?",
-  "6. Et concernant l’environnement ? La chambre, l’hygiène, le calme ?",
-  "7. Comment s’est organisée votre sortie de l’hôpital ?",
-  "8. Comment avez-vous vécu la relation avec l’équipe soignante ?",
-  "9. En un mot, comment résumeriez-vous votre expérience globale ?",
-];
+import prompts from "../../data/prompts.json";
+const questions = prompts.questionnaire_questions;
 
 function concatResponses(
   answers: { index: number; text: string }[],
@@ -138,7 +128,7 @@ export default function QuestionnairePage() {
     setAnswers(allAnswers);
   };
 
-  // Nouvelle logique de sauvegarde inspirée d'AudioRecorder.tsx
+  // Nouvelle logique de sauvegarde via /api/save-task (alignée avec AudioRecorder.tsx)
   const handleSave = async () => {
     if (!patientName) {
       alert("Veuillez renseigner le prénom et le nom du patient avant d’enregistrer.");
@@ -146,59 +136,22 @@ export default function QuestionnairePage() {
     }
     setIsGeneratingTable(true);
     try {
-      // Séparation prénom/nom
       const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
       const cleanPatientName = `${prenomPart}-${nomPart}`;
-      // On concatène toutes les questions/réponses
       const fullTranscription = concatResponses(answers, writtenAnswers);
-      // Nettoyage texte
-      const cleanRes = await fetch("/api/clean", {
+
+      const res = await fetch("/api/save-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: fullTranscription,
-          prenom: prenomPart,
-          nom: nomPart,
-        }),
-      });
-      const cleanData = await cleanRes.json();
-      if (!cleanRes.ok) throw new Error(cleanData?.error || "Erreur nettoyage");
-      // Génération tableau
-      const tableRes = await fetch("/api/table", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: fullTranscription,
+          transcription: fullTranscription,
           patientName: cleanPatientName,
         }),
+        keepalive: true,
       });
-      // Essaye d'abord en JSON, si erreur -> blob (binaire)
-      let tableData;
-      try {
-        tableData = await tableRes.json();
-      } catch (err) {
-        alert("Erreur : le serveur retourne un PDF au lieu d'un JSON (corrige le backend)");
-        setIsGeneratingTable(false);
-        return;
-      }
-      if (!tableRes.ok) throw new Error(tableData?.error || "Erreur tableau");
-      // Sauvegarde
-      const saveRes = await fetch("/api/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nom: nomPart || "Nom inconnu",
-          prenom: prenomPart || "Prénom inconnu",
-          transcription: fullTranscription,
-          commentaire_pro: commentaire,
-          transcription_corrigee: cleanData.text,
-          pdf_transcription: cleanData.pdfPath,
-          pdf_tableau: tableData.pdfPath,
-          tableau: cleanData.csv,
-        }),
-      });
-      const saveData = await saveRes.json();
-      if (saveRes.ok && saveData.success) {
+      const result = await res.json();
+
+      if (result.success) {
         alert("Enquête de Satisfaction enregistrée ✅");
         setCommentaire("");
         setTranscription("");
@@ -298,7 +251,7 @@ export default function QuestionnairePage() {
         </div>
         
       )}
-              <div className="commentaire-box" style={{ marginTop: 24 }}>
+              <div className="commentaire-box" style={{ marginTop: isRecording ? "60px" : "0px" }}>
                 <textarea
                   value={reponse}
                   onChange={(e) => setReponse(e.target.value)}
@@ -376,7 +329,7 @@ export default function QuestionnairePage() {
                           style={{ width: "100%", minHeight: 60, marginBottom: 16 }}
                         />
                       </div>
-                      <div className="action-buttons" style={{ display: "flex", gap: 16 }}>
+                      <div className="action-buttons" style={{ display: "flex", gap: 16, justifyContent: "center" }}>
                         <button
                           onClick={() => setTranscription("")}
                           className="btn-delete"
