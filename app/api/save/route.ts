@@ -167,8 +167,8 @@ export async function POST(req: Request) {
       etat_action: row.etat_action,
       recommandation: row.recommandation || ""
     }));
-    const scores = detailsToInsert.map((r) => r.score_satisfaction);
-    const moyenne = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+    const scores = detailsToInsert.map((r: { score_satisfaction: number }) => r.score_satisfaction);
+    const moyenne = scores.length > 0 ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : null;
     const label = moyenne !== null
       ? moyenne >= 8
         ? "Très satisfait"

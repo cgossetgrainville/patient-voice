@@ -344,7 +344,7 @@ export default function Dashboard() {
                               onClick={() => {
                                 // Remove any /tmp/ prefix from the s3_key if present
                                 const rawKey = e.pdf_transcription?.replace(/^\/tmp\//, "");
-                                const admin = `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_");
+                                const admin = adminInfo ? `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_") : "inconnu";
                                 const url = `https://patient-voice.s3.eu-west-par.io.cloud.ovh.net/${admin}/${rawKey}`;
                                 window.open(url, "_blank", "popup,width=800,height=600");
                               }}
@@ -358,7 +358,7 @@ export default function Dashboard() {
                              onClick={() => {
                                 // Remove any /tmp/ prefix from the s3_key if present
                                 const rawKey = e.pdf_tableau?.replace(/^\/tmp\//, "");
-                                const admin = `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_");
+                                const admin = adminInfo ? `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_") : "inconnu";
                                 const url = `https://patient-voice.s3.eu-west-par.io.cloud.ovh.net/${admin}/${rawKey}`;
                                 window.open(url, "_blank", "popup,width=800,height=600");
                               }}
@@ -372,7 +372,7 @@ export default function Dashboard() {
                               onClick={() => {
                                 // Remove any /tmp/ prefix from the s3_key if present
                                 const rawKey = e.pdf_rapport?.replace(/^\/tmp\//, "");
-                                const admin = `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_");
+                                const admin = adminInfo ? `${adminInfo.prenom}-${adminInfo.nom}`.toLowerCase().replace(/\s+/g, "_") : "inconnu";
                                 const url = `https://patient-voice.s3.eu-west-par.io.cloud.ovh.net/${admin}/${rawKey}`;
                                 window.open(url, "_blank", "popup,width=800,height=600");
                               }}
