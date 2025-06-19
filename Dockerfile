@@ -40,7 +40,10 @@ RUN if [ -f yarn.lock ]; then yarn build; \
     else echo "Lockfile not found." && exit 1; fi
 
 # --- 8. EXPOSE PORT ET STARTUP ---
-EXPOSE 3000
-ENV PORT=3000
+ENV PORT=32776
+EXPOSE 32776
+
+# S'assurer que l'app écoute sur 0.0.0.0 (et non localhost)
+ENV HOST=0.0.0.0
 
 CMD ["npm", "run", "dev"]
