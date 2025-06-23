@@ -136,15 +136,21 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
 
   const handleSave = async (cleanData: any, tableData: any) => {
     console.log("➡️ Lancement de handleSave");
-    if (!patientName || !patientName.includes("-")) {
-      alert("Veuillez renseigner le prénom et le nom du patient (format : prénom-nom).");
+    const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
+
+    if (
+      !prenomPart || !nomPart ||
+      prenomPart.trim().length === 0 || nomPart.trim().length === 0 ||
+      prenomPart.toLowerCase().includes("inconnu") ||
+      nomPart.toLowerCase().includes("inconnu")
+    ) {
+      alert("Veuillez renseigner un prénom et un nom valides pour le patient avant de sauvegarder.");
       return;
     }
     if (isEditing) {
       setTranscription(editedText);
       setIsEditing(false);
     }
-    const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
 
     const res = await fetch("/api/save", {
       method: "POST",
@@ -294,14 +300,13 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
             
             <button
               onClick={async () => {
-                if (!patientName || !patientName.includes("-")) {
-                  alert("Veuillez renseigner le prénom et le nom du patient (format : prénom-nom).");
-                  return;
-                }
-
                 const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
-                if (!prenomPart || !nomPart) {
-                  alert("Veuillez renseigner à la fois le prénom et le nom du patient.");
+                if (
+                  !prenomPart || !nomPart ||
+                  prenomPart.toLowerCase() === "prénom inconnu" ||
+                  nomPart.toLowerCase() === "nom inconnu"
+                ) {
+                  alert("Veuillez renseigner à la fois le prénom et le nom du patient avant de sauvegarder.");
                   return;
                 }
 
@@ -343,12 +348,15 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
                 }
               }}
               className="btn-pdf"
-              disabled={
+              /* disabled={
                 isGeneratingTable ||
                 !patientName ||
                 !patientName.includes("-") ||
-                patientName.split("-").some((part) => part.trim() === "")
-              }
+                patientName.split("-").some(
+                  (part) =>
+                    part.trim() === "" || part.toLowerCase().includes("inconnu")
+                )
+              } */
             >
               {isGeneratingTable ? (
                 <>
