@@ -1,6 +1,12 @@
 // app/api/transcribe/route.ts
 
+
 export const runtime = 'nodejs';
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 import { NextResponse } from "next/server";
 import fs from "fs";
