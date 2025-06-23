@@ -127,7 +127,7 @@ export default function Dashboard() {
         </div>
       </aside>
       <main className="main-container">
-        <div className="main-content">
+        <div className="homepage-header mb-25">
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "3rem"}}>
           <Image src={logo1} alt="Logo Patient Voice" width={300} height={300} style={{ objectFit: "contain" }} />
         </div>
@@ -244,31 +244,33 @@ export default function Dashboard() {
                           <td className="verbatim-summary">{p.resume_verbatim}</td>
                           <td className="text-center">{p.indice_priorite}</td>
                           <td className="text-recommandations">{p.recommandation}</td>
-                          <td className="etat-buttons text-center">
-                            <button
-                              className={`etat-button ${
-                                p.etat_action === "À faire" ? "etat-a-faire-active" : "etat-a-faire"
-                              }`}
-                              onClick={() => updateEtat(p.id, "À faire")}
-                            >
-                              À faire
-                            </button>
-                            <button
-                              className={`etat-button ${
-                                p.etat_action === "En cours" ? "etat-en-cours-active" : "etat-en-cours"
-                              }`}
-                              onClick={() => updateEtat(p.id, "En cours")}
-                            >
-                              En cours
-                            </button>
-                            <button
-                              className={`etat-button ${
-                                p.etat_action === "Résolu" ? "etat-resolu-active" : "etat-resolu"
-                              }`}
-                              onClick={() => updateEtat(p.id, "Résolu")}
-                            >
-                              Résolu
-                            </button>
+                          <td style={{ verticalAlign: "middle" }}>
+                            <div className="etat-buttons">
+                              <button
+                                className={`etat-button ${
+                                  p.etat_action === "À faire" ? "etat-a-faire-active" : "etat-a-faire"
+                                }`}
+                                onClick={() => updateEtat(p.id, "À faire")}
+                              >
+                                À faire
+                              </button>
+                              <button
+                                className={`etat-button ${
+                                  p.etat_action === "En cours" ? "etat-en-cours-active" : "etat-en-cours"
+                                }`}
+                                onClick={() => updateEtat(p.id, "En cours")}
+                              >
+                                En cours
+                              </button>
+                              <button
+                                className={`etat-button ${
+                                  p.etat_action === "Résolu" ? "etat-resolu-active" : "etat-resolu"
+                                }`}
+                                onClick={() => updateEtat(p.id, "Résolu")}
+                              >
+                                Résolu
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

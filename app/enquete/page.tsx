@@ -10,7 +10,9 @@ export default function Home() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
-  const [patientName, setPatientName] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const patientName = `${prenom}-${nom}`;
   const [adminInfo, setAdminInfo] = useState<{ prenom: string; nom: string } | null>(null);
 
   useEffect(() => {
@@ -49,19 +51,28 @@ export default function Home() {
         </div>
       </aside>
       <div className="patient-name-fixed">
-        <label htmlFor="patientName" className="homepage-label">
-          Nouveau Patient
-        </label>
+        <label className="homepage-label">Nouveau Patient</label>
         <input
           type="text"
-          id="patientName"
-          value={patientName}
-          onChange={(e) => setPatientName(e.target.value)}
-          placeholder="Prénom  -  Nom"
+          id="prenom"
+          value={prenom}
+          onChange={(e) => setPrenom(e.target.value)}
+          placeholder="Prénom"
           className="homepage-input"
+          style={{ marginBottom: "10px", maxWidth:"7rem" }}
+        />
+        <input
+          type="text"
+          id="nom"
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          placeholder="Nom"
+          className="homepage-input"
+          style={{ marginBottom: "10px", maxWidth:"7rem" }}
+
         />
       </div>
-      <main className="main-container flex-1 px-6 ml-32">
+      <main className="main-container">
         <div className="homepage-header">
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <Image src={logo1} alt="Logo Patient Voice" width={440} height={160} />

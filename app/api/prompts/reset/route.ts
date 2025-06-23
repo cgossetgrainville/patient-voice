@@ -11,8 +11,8 @@ const s3 = new S3Client({
 });
 
 export async function POST(req: Request) {
-  const prenom = req.headers.get("x-admin-prenom")?.toLowerCase() || "admin";
-  const nom = req.headers.get("x-admin-nom")?.toLowerCase() || "admin";
+  const prenom = req.headers.get("x-admin-prenom")?.trim().replace(" ", "_") || "admin";
+  const nom = req.headers.get("x-admin-nom")?.trim().replace(" ", "_") || "admin";
   const adminKey = `${prenom}-${nom}/prompts.json`;
 
   try {

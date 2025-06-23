@@ -24,7 +24,7 @@ def clean_transcription(raw_text: str) -> str:
     )
 
     response = client.chat.completions.create(
-        model="Meta-Llama-3_3-70B-Instruct",
+        model="Mistral-7B-Instruct-v0.3",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.4,
         max_tokens=2048
@@ -95,7 +95,6 @@ if __name__ == "__main__":
 
     import boto3
 
-    print("✅ Initialisation du client S3…")
     s3_client = boto3.client(
         's3',
         endpoint_url="https://s3.eu-west-par.io.cloud.ovh.net/",
@@ -109,7 +108,6 @@ if __name__ == "__main__":
     s3_key = f"{admin_name}/{pdf_filename}"    
     bucket_name = "patient-voice"
 
-    print(f"📁 Téléversement du fichier {pdf_path} vers {bucket_name}/{s3_key}…")
     s3_client.upload_file(
         pdf_path,
         bucket_name,
@@ -120,5 +118,4 @@ if __name__ == "__main__":
             "ContentDisposition": "inline"
         }
     )
-    print("✅ Téléversement terminé avec succès.")
     print(s3_key)

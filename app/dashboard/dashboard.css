@@ -1,10 +1,5 @@
+/ * === Custom Utility Classes for Dashboard === */
 
-/* === Custom Utility Classes for Dashboard === */
-.main-container {
-  flex: 1;
-  padding: 2rem;
-  margin-bottom: 20px;
-}
 
 .text-center {
   text-align: center;
@@ -121,12 +116,6 @@ body {
 }
 
 
-/* === Main Content === */
-.main-content {
-  margin-left: 8rem;
-  margin-bottom: 100px;
-  padding: 2rem;
-}
 
 /* === Dashboard === */
 .dashboard-container {
@@ -204,6 +193,7 @@ body {
   white-space: normal;
   word-break: break-word;
   text-align: left;
+  vertical-align: middle;
 }
 
 .table-row-hover:hover {
@@ -222,7 +212,9 @@ body {
 }
 .etat-buttons {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
   gap: 0.25rem;
 }
 .etat-buttons button {
@@ -301,7 +293,7 @@ body {
   position: fixed;
   top: 1rem;
   left: 12rem;
-  background-color: white;
+  background-color: transparent;
   z-index: 100;
 }
 

@@ -89,7 +89,7 @@ export default function ParametresPage() {
         </div>
       </aside>
 
-      <main className="main-container ml-32">
+      <main className="main-container">
         <div className="homepage-header">
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center"}}>
           <Image src={logo1} alt="Logo Patient Voice" width={300} height={300} style={{ objectFit: "contain" }} />

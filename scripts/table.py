@@ -163,5 +163,4 @@ s3_client.upload_file(
         "ContentDisposition": "inline"
     }
 )
-logging.info(f"PDF uploadé avec succès sur S3 : {s3_key}")
 print(s3_key)

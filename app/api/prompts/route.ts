@@ -39,8 +39,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const prenom = req.headers.get("x-admin-prenom")?.trim().toLowerCase().replace(" ", "_");
-  const nom = req.headers.get("x-admin-nom")?.trim().toLowerCase().replace(" ", "_");
+  const prenom = req.headers.get("x-admin-prenom")?.trim().replace(" ", "_");
+  const nom = req.headers.get("x-admin-nom")?.trim().replace(" ", "_");
   const key = `${prenom}-${nom}/prompts.json`;
 
   try {

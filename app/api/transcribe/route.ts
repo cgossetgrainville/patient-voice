@@ -10,11 +10,13 @@ import axios from "axios";
 import FormData from "form-data";
 import ffmpeg from "fluent-ffmpeg";
 
-const OVH_ASR_URL = "https://nvr-asr-fr-fr.endpoints.kepler.ai.cloud.ovh.net/api/v1/asr/recognize";
-const OVH_API_KEY = process.env.OVH_API_KEY || "eyJhbGciOiJFZERTQSIsImtpZCI6IjgzMkFGNUE5ODg3MzFCMDNGM0EzMTRFMDJFRUJFRjBGNDE5MUY0Q0YiLCJraW5kIjoicGF0IiwidHlwIjoiSldUIn0"; // Mets ta clé dans .env
+const OVH_API_KEY = process.env.OVH_API_KEY ; // Mets ta clé dans .env
 
 export async function POST(req: Request) {
   const formData = await req.formData();
+  const langue = formData.get("langue")?.toString() || "fr";
+  let langue2 = langue === "en" ? "us" : langue;
+  const OVH_ASR_URL = `https://nvr-asr-${langue}-${langue2}.endpoints.kepler.ai.cloud.ovh.net/api/v1/asr/recognize`;
   const patientName = formData.get("patientName")?.toString() || "Anonyme";
   const file = formData.get("audio") as File;
 
@@ -49,6 +51,26 @@ export async function POST(req: Request) {
   // Prépare l'appel à OVH ASR AVEC LE WAV
   const ovhForm = new FormData();
   ovhForm.append("audio", fs.createReadStream(wavPath), path.basename(wavPath));
+
+  // Ajout des options de diarisation et de word boosting
+  const speechContext = {
+    boost: 20.0,
+    phrases: [
+      "douleur", "infirmier", "prise en charge", "antalgique", "médecin", "accueil", "repas",
+      "hôpital", "sortie", "transfert", "confort", "satisfaction", "soins", "examens", "patient"
+    ]
+  };
+
+  const config = {
+    enable_word_time_offsets: false,
+    enable_speaker_diarization: true,
+    speech_contexts: [speechContext]
+  };
+
+  ovhForm.append("config", Buffer.from(JSON.stringify(config)), {
+    filename: "config.json",
+    contentType: "application/json",
+  });
 
   let transcription = "";
   try {

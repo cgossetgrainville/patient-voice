@@ -30,14 +30,12 @@ export async function POST(req: Request) {
       }
     }
 
-    const cleanRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/clean`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: transcription, prenom, nom, adminPrenom, adminNom }),
-      });
-    const cleanData = await cleanRes.json();
-
-    const [rapportRes, tableRes] = await Promise.all([
+    const [cleanRes, rapportRes, tableRes] = await Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/clean`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: transcription, prenom, nom, adminPrenom, adminNom }),
+      }),
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/rapport`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,10 +48,9 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    const [rapportData, tableJson] = await Promise.all([
-      rapportRes.json(),
-      tableRes.json(),
-    ]);
+    const cleanData = await cleanRes.json();
+    const rapportData = await rapportRes.json();
+    const tableJson = await tableRes.json();
 
     const s3TablePath = tableJson.pdfPath;
 

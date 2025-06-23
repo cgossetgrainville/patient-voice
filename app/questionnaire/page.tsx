@@ -49,8 +49,11 @@ export default function QuestionnairePage() {
   const [commentaire, setCommentaire] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const [patientName, setPatientName] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const patientName = `${prenom}-${nom}`;
   const [adminInfo, setAdminInfo] = useState<{ prenom: string; nom: string } | null>(null);
+  const [selectedLangue, setSelectedLangue] = useState("fr");
   useEffect(() => {
     if (answers.length > 0 || writtenAnswers.length > 0) {
       setTranscription(concatResponses(answers, writtenAnswers));
@@ -72,6 +75,7 @@ export default function QuestionnairePage() {
         const { index: idx, blob } = finalRecordings[i];
         const formData = new FormData();
         formData.append("audio", blob, `question-${idx + 1}.webm`);
+        formData.append("langue", selectedLangue);
         const res = await fetch("/api/transcribe", { method: "POST", body: formData });
         const data = await res.json();
         audioAnswers.push({ index: idx, text: data.text });
@@ -120,6 +124,7 @@ export default function QuestionnairePage() {
       const { index: idx, blob } = recordings[i];
       const formData = new FormData();
       formData.append("audio", blob, `question-${idx + 1}.webm`);
+      formData.append("langue", selectedLangue);
       const res = await fetch("/api/transcribe", { method: "POST", body: formData });
       const data = await res.json();
       allAnswers.push({ index: idx, text: data.text });
@@ -136,8 +141,6 @@ export default function QuestionnairePage() {
     }
     setIsGeneratingTable(true);
     try {
-      const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
-      const cleanPatientName = `${prenomPart}-${nomPart}`;
       const fullTranscription = concatResponses(answers, writtenAnswers);
 
       const res = await fetch("/api/save-task", {
@@ -145,7 +148,7 @@ export default function QuestionnairePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           transcription: fullTranscription,
-          patientName: cleanPatientName,
+          patientName: patientName,
         }),
         keepalive: true,
       });
@@ -153,6 +156,7 @@ export default function QuestionnairePage() {
 
       if (result.success) {
         alert("Enquête de Satisfaction enregistrée ✅");
+        window.location.reload();
         setCommentaire("");
         setTranscription("");
       } else {
@@ -196,24 +200,46 @@ export default function QuestionnairePage() {
       </aside>
 
       <div className="patient-name-fixed">
-        <label htmlFor="patientName" className="homepage-label">Nouveau Patient</label>
+        <label className="homepage-label">Nouveau Patient</label>
         <input
           type="text"
-          id="patientName"
-          value={patientName}
-          onChange={(e) => setPatientName(e.target.value)}
-          placeholder="Prénom  -  Nom"
+          id="prenom"
+          value={prenom}
+          onChange={(e) => setPrenom(e.target.value)}
+          placeholder="Prénom"
           className="homepage-input"
+          style={{ marginBottom: "10px", maxWidth:"7rem" }}
+        />
+        <input
+          type="text"
+          id="nom"
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          placeholder="Nom"
+          className="homepage-input"
+          style={{ marginBottom: "10px", maxWidth:"7rem" }}
         />
       </div>
-      <main className="main-container flex-1 px-6 ml-32">
+      
+      <main className="main-container">
         <div className="homepage-header">
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <Image src={logo1} alt="Logo Patient Voice" width={440} height={160} />
           </div>
           <p className="homepage-subtitle">Prototypage d’un outil d’écoute patient</p>
         </div>
-
+        <div>
+        <label style={{ marginRight: "0.5rem" }} htmlFor="lang-select">Langue :</label>
+        <select
+          id="langue-select"
+          value={selectedLangue}
+          onChange={(e) => setSelectedLangue(e.target.value)}
+        >
+          <option value="fr">Français</option>
+          <option value="en">Anglais</option>
+          <option value="es">Espagnol</option>
+        </select>
+      </div>
         <div className="recorder-wrapper">
           {index < questions.length ? (
             <>

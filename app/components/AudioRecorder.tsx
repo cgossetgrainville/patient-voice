@@ -19,6 +19,7 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
   const [editedText, setEditedText] = useState("");
   const [commentaire, setCommentaire] = useState("");
   const [isGeneratingTable, setIsGeneratingTable] = useState(false);
+  const [selectedLangue, setSelectedLangue] = useState("fr");
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   
@@ -71,6 +72,7 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
         const formData = new FormData();
         formData.append("audio", file);
         formData.append("patientName", patientName);
+        formData.append("langue", selectedLangue);
 
         const res = await fetch("/api/transcribe", {
           method: "POST",
@@ -119,6 +121,7 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
     const formData = new FormData();
     formData.append("audio", file);
     formData.append("patientName", patientName);
+    formData.append("langue", selectedLangue);
 
     const res = await fetch("/api/transcribe", {
       method: "POST",
@@ -133,8 +136,8 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
 
   const handleSave = async (cleanData: any, tableData: any) => {
     console.log("➡️ Lancement de handleSave");
-    if (!patientName) {
-      alert("Veuillez renseigner le prénom et le nom du patient avant d’enregistrer.");
+    if (!patientName || !patientName.includes("-")) {
+      alert("Veuillez renseigner le prénom et le nom du patient (format : prénom-nom).");
       return;
     }
     if (isEditing) {
@@ -179,7 +182,20 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
   };
 
   return (
-    <div className="recorder-wrapper">
+    <div>
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ marginRight: "0.5rem" }} htmlFor="lang-select">Langue :</label>
+        <select
+          id="langue-select"
+          value={selectedLangue}
+          onChange={(e) => setSelectedLangue(e.target.value)}
+        >
+          <option value="fr">Français</option>
+          <option value="en">Anglais</option>
+          <option value="es">Espagnol</option>
+        </select>
+      </div>
+      <div className="recorder-wrapper">
       {!isRecording ? (
         <img
           src="/play.png"
@@ -278,13 +294,18 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
             
             <button
               onClick={async () => {
-                if (!patientName) {
-                  alert("Veuillez renseigner le prénom et le nom du patient avant d’enregistrer.");
+                if (!patientName || !patientName.includes("-")) {
+                  alert("Veuillez renseigner le prénom et le nom du patient (format : prénom-nom).");
+                  return;
+                }
+
+                const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
+                if (!prenomPart || !nomPart) {
+                  alert("Veuillez renseigner à la fois le prénom et le nom du patient.");
                   return;
                 }
 
                 setIsGeneratingTable(true);
-                const [prenomPart, nomPart] = patientName.split("-").map((s) => s.trim());
                 const cleanPatientName = `${prenomPart}-${nomPart}`;
 
                 const res = await fetch("/api/save-task", {
@@ -322,7 +343,12 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
                 }
               }}
               className="btn-pdf"
-              disabled={isGeneratingTable || !patientName}
+              disabled={
+                isGeneratingTable ||
+                !patientName ||
+                !patientName.includes("-") ||
+                patientName.split("-").some((part) => part.trim() === "")
+              }
             >
               {isGeneratingTable ? (
                 <>
@@ -335,6 +361,7 @@ export default function AudioRecorder({ patientName }: AudioRecorderProps) {
           </div>
         </>
       )}
+    </div>
     </div>
   );
 }
