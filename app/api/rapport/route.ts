@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
-import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest): Promise<Response> {
   const { adminPrenom, adminNom, text, prenom, nom } = await req.json();

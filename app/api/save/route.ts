@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import { spawn } from "child_process";
-import path from "path";
-import os from "os";
 import { Pool } from "pg";
-import { headers } from "next/headers";
 import * as cookie from "cookie";
 
 async function query(text: string, params: any[] = [], pool: Pool) {
@@ -14,84 +10,6 @@ async function query(text: string, params: any[] = [], pool: Pool) {
   } finally {
     client.release();
   }
-}
-
-function cleanAndGeneratePDF(rawText: string, patientName: string): Promise<{ text: string; pdfPath: string }> {
-  return new Promise((resolve, reject) => {
-    const python = spawn("python3", ["./scripts/clean.py"], {
-      env: { ...process.env, PATIENT_NAME: patientName },
-    });
-    let output = "";
-    let error = "";
-
-    python.stdout.on("data", (data) => {
-      output += data.toString();
-    });
-
-    python.stderr.on("data", (data) => {
-      error += data.toString();
-    });
-
-    python.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`clean.py error: ${error}`));
-      } else {
-        const lines = output.trim().split("\n");
-        const firstLine = lines[0];
-        const pdfPathMatch = firstLine.match(/^(.+\.pdf)$/);
-        const pdfPath = pdfPathMatch ? pdfPathMatch[1].trim() : null;
-        const cleanedText = lines.slice(1).join("\n").trim();
-        if (!pdfPath) {
-          reject(new Error("PDF path not found in output"));
-        } else {
-          resolve({ text: cleanedText, pdfPath });
-        }
-      }
-    });
-
-    python.stdin.write(rawText);
-    python.stdin.end();
-  });
-}
-
-
-// Ajout du rapport PDF (appel à rapport.py)
-function generateRapportPDF(rawText: string, patientName: string): Promise<{ pdfPath: string }> {
-  return new Promise((resolve, reject) => {
-    const filename = `${patientName}-Rapport`;
-    const python = spawn("python3", ["./scripts/rapport.py"], {
-      env: { ...process.env, PDF_FILENAME: filename, PATIENT_NAME: patientName },
-    });
-    let output = "";
-    let error = "";
-
-    python.stdout.on("data", (data) => {
-      output += data.toString();
-    });
-
-    python.stderr.on("data", (data) => {
-      error += data.toString();
-    });
-
-    python.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`rapport.py error: ${error}`));
-      } else {
-        const lines = output.trim().split("\n");
-        const firstLine = lines[0];
-        const pdfPathMatch = firstLine.match(/^(.+\.pdf)$/);
-        const pdfPath = pdfPathMatch ? pdfPathMatch[1].trim() : null;
-        if (!pdfPath) {
-          reject(new Error("PDF path not found in rapport output"));
-        } else {
-          resolve({ pdfPath });
-        }
-      }
-    });
-
-    python.stdin.write(rawText);
-    python.stdin.end();
-  });
 }
 
 export async function POST(req: Request) {

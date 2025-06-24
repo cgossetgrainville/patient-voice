@@ -1,22 +1,24 @@
-# /Users/m.mur/Patient Voice/patient-voice-app/scripts/clean.py
-
 import os
 import json
-from openai import OpenAI
+from utils.openai_utils import get_openai_client
+from utils.s3_utils import upload_to_ovh_s3
+# Imports pour la génération du PDF avec ReportLab
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
-url = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
 
-client = OpenAI(
-    base_url=url,
-    api_key=os.getenv("OVH_API_KEY")
-)
+client = get_openai_client()
 
-# Load prompts from data/prompts.json
+# Chargement du prompt depuis un fichier JSON
 with open(os.path.join(os.path.dirname(__file__), "..", "data", "prompts.json"), "r", encoding="utf-8") as f:
     prompts = json.load(f)
 
 cleaning_prompt_template = prompts["cleaning_prompt"]
 
+# Appel au LLM pour nettoyer la transcription brute
 def clean_transcription(raw_text: str) -> str:
     prompt = (
         f"{cleaning_prompt_template}\n\n"
@@ -31,27 +33,25 @@ def clean_transcription(raw_text: str) -> str:
     )
     return response.choices[0].message.content.strip()
 
+
+
 if __name__ == "__main__":
     import sys
     raw_text = sys.stdin.read()
     cleaned = clean_transcription(raw_text)
 
-    from datetime import datetime
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.units import cm
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
+    # Définition du nom de fichier PDF à partir du nom du patient
     patient_name = os.getenv("PATIENT_NAME", "default").strip().replace(" ", "_")
     pdf_filename = f"{patient_name}-Transcription.pdf"
     pdf_path = f"/tmp/{pdf_filename}"
 
-    # Print path FIRST so route.ts can extract it
+    # Print du chemin tmp du pdf pour que le route.ts puisse le resuperer
     print(pdf_path)
-    print()  # ensures line separation
+    print()  
     print(cleaned)
 
+    # Création du document PDF avec mise en page
     doc = SimpleDocTemplate(
         pdf_path,
         pagesize=A4,
@@ -79,6 +79,7 @@ if __name__ == "__main__":
         alignment=TA_LEFT
     )
 
+    # Construction du contenu du PDF à partir du texte nettoyé
     elements = [Paragraph("Transcription de l’échange professionnel-patient", title_style), Spacer(1, 0.75 * cm)]
 
     for line in cleaned.split("\n"):
@@ -93,29 +94,6 @@ if __name__ == "__main__":
 
     doc.build(elements)
 
-    import boto3
 
-    s3_client = boto3.client(
-        's3',
-        endpoint_url="https://s3.eu-west-par.io.cloud.ovh.net/",
-        aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
-        aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
-    )
-
-    admin_prenom = os.getenv("ADMIN_PRENOM", "").strip()
-    admin_nom = os.getenv("ADMIN_NOM", "").strip()
-    admin_name = f"{admin_prenom}-{admin_nom}".lower().replace(" ", "_") or "admin"
-    s3_key = f"{admin_name}/{pdf_filename}"    
-    bucket_name = "patient-voice"
-
-    s3_client.upload_file(
-        pdf_path,
-        bucket_name,
-        s3_key,
-        ExtraArgs={
-            "ACL": "public-read",
-            "ContentType": "application/pdf",
-            "ContentDisposition": "inline"
-        }
-    )
-    print(s3_key)
+    # Envoi du PDF généré vers le bucket S3 OVH
+    upload_to_ovh_s3(pdf_path, pdf_filename)

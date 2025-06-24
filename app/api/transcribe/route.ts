@@ -1,12 +1,6 @@
 // app/api/transcribe/route.ts
 
-
 export const runtime = 'nodejs';
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 import { NextResponse } from "next/server";
 import fs from "fs";
@@ -15,6 +9,7 @@ import os from "os";
 import axios from "axios";
 import FormData from "form-data";
 import ffmpeg from "fluent-ffmpeg";
+
 
 const OVH_API_KEY = process.env.OVH_API_KEY ; // Mets ta clé dans .env
 
@@ -30,13 +25,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 });
   }
 
-  // On sauvegarde temporairement le fichier
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
   const tempDir = os.tmpdir();
   const originalPath = path.join(tempDir, file.name);
   fs.writeFileSync(originalPath, buffer);
+
+  const ext = path.extname(file.name).toLowerCase();
+
+  if (ext === ".txt") {
+    const text = fs.readFileSync(originalPath, "utf-8");
+    fs.unlinkSync(originalPath);
+    return NextResponse.json({ patientName, text });
+  }
+
+  if (ext === ".docx") {
+    const mammoth = await import("mammoth");
+    const result = await mammoth.extractRawText({ path: originalPath });
+    fs.unlinkSync(originalPath);
+    return NextResponse.json({ patientName, text: result.value });
+  }
 
   // Toujours utiliser un nom distinct pour le wav
   const wavPath = originalPath + ".converted.wav";
@@ -115,3 +124,11 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ patientName, text: transcription });
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "100mb",
+    },
+  },
+};

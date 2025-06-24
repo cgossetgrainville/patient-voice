@@ -1,0 +1,83 @@
+/* Centrage complet de la page */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-image: url("/images/fond.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+/* Formulaire */
+form {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  width: 100%;
+  max-width: 24rem;
+}
+
+input {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+}
+
+button {
+  width: 100%;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease-in-out;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #1e40af;
+}
+
+/* Liens */
+a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Messages d'erreur */
+.text-red-500 {
+  color: #ef4444;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+/* Titres */
+h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}

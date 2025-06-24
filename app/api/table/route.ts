@@ -2,7 +2,6 @@
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
-import { cookies } from "next/headers";
 
 
 export async function POST(req: NextRequest) : Promise<Response> {
@@ -15,9 +14,6 @@ export async function POST(req: NextRequest) : Promise<Response> {
 
   const trimmed = text.length > 8000 ? text.slice(0, 8000) : text;
 
-  const cleanedText = text;
-
-  // Étape 2 : Appeler table.py avec le texte nettoyé
   return new Promise((resolve) => {
     const safeName = (patientName || "default").replace(/\s*-\s*/g, "-").replace(/\s+/g, "_");
     const filename = `${safeName}-Tableau`;
@@ -69,11 +65,7 @@ export async function POST(req: NextRequest) : Promise<Response> {
       }
     });
 
-    table.stdin.write(cleanedText);
+    table.stdin.write(text);
     table.stdin.end();
-  });
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
   });
 }

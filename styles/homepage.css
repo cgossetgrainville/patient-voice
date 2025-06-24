@@ -1,0 +1,176 @@
+
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #0a0a0a;
+      --foreground: #ededed;
+    }
+  }
+  
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
+  .patient-input {
+    width: 100%;
+    max-width: 32rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    outline: none;
+    position: fixed;
+    top: 2rem;
+    left: 9rem;
+    z-index: 100;
+    background-color: white;
+  }
+  
+  .patient-input:focus {
+    outline: 2px solid #3b82f6;
+  }
+  
+  
+  .main-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: white;
+    padding: 1rem;
+    text-align: center;
+    flex: 1;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    margin-left: 5rem;
+  }
+  
+  .main-title {
+    font-size: 2.25rem;
+    font-weight: bold;
+    color: #1d4ed8;
+    margin-bottom: 0.5rem;
+  }
+  
+  .main-subtitle {
+    color: #4b5563;
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .nav-item {
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  
+  .nav-item:hover {
+    color: #93c5fd;
+  }
+  .patient-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #374151;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+  .avatar-circle {
+    width: 2rem;
+    height: 2rem;
+    background-color: #93c5fd;
+    color: white;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .patient-name-container {
+    position: fixed;
+    top: 2rem;
+    left: 9rem;
+    z-index: 200;
+    background-color: white;
+  }
+  .btn-dashboard {
+    display: inline-block;
+    color: #2563eb;
+    font-size: 16px;
+    margin-top: 1rem;
+    text-decoration: underline;
+  }
+  
+  .homepage-header {
+    text-align: center;
+    margin-top: 4rem;
+  }
+
+  .homepage-title {
+    font-size: 2.25rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+  }
+
+  .homepage-subtitle {
+    color: var(--gray-dark);
+    font-size: 1.125rem;
+  }
+
+  .homepage-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--gray-dark);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    background-color: transparent;
+  }
+
+  .homepage-input {
+    max-width: 32rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    outline: none;
+    background-color: white;
+  }
+
+  .homepage-input:focus {
+    outline: 2px solid var(--primary-blue);
+  }
+
+  .homepage-link {
+    display: inline-block;
+    color: var(--primary-blue);
+    font-size: 1rem;
+    margin-top: 1rem;
+    text-decoration: underline;
+  }
+  .upload-label-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  .upload-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+  .start-record-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 180px;
+  }

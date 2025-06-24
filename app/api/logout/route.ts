@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function GET() {
-const res = NextResponse.redirect("http://localhost:3000");
+  if (!process.env.NEXT_PUBLIC_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_BASE_URL is not defined");
+  }
+
+  const res = NextResponse.redirect(process.env.NEXT_PUBLIC_BASE_URL!);
 
   res.cookies.set("admin_session", "", {
     path: "/",

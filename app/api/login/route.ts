@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
+import { config } from "dotenv";
 import bcrypt from "bcrypt";
 import type { NextRequest } from "next/server";
 
+config();
+
 const pool = new Pool({
-  user: "avnadmin",
-  host: "postgresql-4b3783ad-o5359142f.database.cloud.ovh.net",
-  database: "DB_CD34",
-  password: "14IYsxzW6e3LMmJVTq0j",
-  port: 20184,
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
@@ -48,7 +47,6 @@ export async function POST(req: NextRequest) {
     return res;
 
   } catch (err) {
-    console.error(err);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

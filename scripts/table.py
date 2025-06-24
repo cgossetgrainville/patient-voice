@@ -1,21 +1,37 @@
+# Script principal pour générer un tableau structuré à partir d'un verbatim patient :
+# 1. Appelle un LLM via l'API OVH pour transformer le texte libre en tableau structuré.
+# 2. Génère un PDF avec ce tableau.
+# 3. Parse les données pour obtenir un JSON structuré.
+# 4. Téléverse le PDF généré dans un bucket S3 (OVH).
 import sys
 import os
 import json
-from openai import OpenAI
+from utils.openai_utils import get_openai_client
+from utils.s3_utils import upload_to_ovh_s3
+from utils.pdf_utils import create_pdf_table, get_custom_style
+# Imports pour la génération du PDF avec ReportLab
+from reportlab.lib.pagesizes import landscape, A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.platypus import Table, TableStyle
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+import tempfile
 
-url = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
 
-client = OpenAI(
-    base_url=url,
-    api_key=os.getenv("OVH_API_KEY")
-)
+client = get_openai_client()
 
+# Chargement du prompt depuis un fichier JSON
 with open(os.path.join("data", "prompts.json"), "r", encoding="utf-8") as f:
     prompts = json.load(f)
 
+# Préparation du prompt à envoyer au LLM
 prompt_template = prompts["table_prompt"]
 
+# Fonction pour interroger le LLM et obtenir un tableau structuré au format texte
 def generate_patient_table(verbatim: str) -> str:
+    # Envoie la requete au LLM pour generer le rapport structure
     response = client.chat.completions.create(
         model="Meta-Llama-3_3-70B-Instruct",
         messages=[
@@ -31,20 +47,12 @@ if __name__ == "__main__":
     verbatim = sys.stdin.read()
     table = generate_patient_table(verbatim)
 
-    from reportlab.lib.pagesizes import landscape, A4
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.units import cm
-    from reportlab.platypus import Table, TableStyle
-    from reportlab.platypus import Paragraph
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib import colors
-
     lines = table.strip().split("\n")
+    # Nettoyage des lignes CSV générées par le LLM (suppression des balises markdown éventuelles)
     lines = [line for line in lines if not line.strip().startswith("```")]  # remove ```csv
 
     csv_lines = lines
         
-    import tempfile
     patient_name = os.getenv("PATIENT_NAME", "default").strip().replace(" ", "_")
     pdf_filename = os.getenv("PDF_FILENAME", f"{patient_name}-Tableau.pdf").strip()
     if not pdf_filename.endswith(".pdf"):
@@ -60,39 +68,11 @@ if __name__ == "__main__":
     line_height = 0.6 * cm
     max_width = width - 4 * cm
 
-    styles = getSampleStyleSheet()
-    custom_style = ParagraphStyle(
-        "Custom",
-        parent=styles["BodyText"],
-        wordWrap="CJK",
-        splitLongWords=False,
-        fontName="Helvetica",
-        fontSize=7,
-        leading=9,
-    )
-
     import csv, io
     csv_content = "\n".join(csv_lines)
     reader = csv.reader(io.StringIO(csv_content), strict=True)
-    csv_data = []
-    for row in reader:
-        wrapped_row = [Paragraph(cell.strip(), custom_style) for cell in row]
-        csv_data.append(wrapped_row)
-
-    col_widths = [3.5*cm, 2.0*cm, 4.5*cm, 3.0*cm, 2.0*cm, 2.0*cm, 2.0*cm, 2.0*cm, 2.5*cm]
-    table_obj = Table(csv_data, colWidths=col_widths, repeatRows=1)
-
-    table_obj.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-        ("FONTSIZE", (0, 0), (-1, -1), 7),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("WORDWRAP", (0, 0), (-1, -1), True),
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
-    ]))
-
+    csv_data = [row for row in reader]
+    table_obj = create_pdf_table(csv_data)
     table_obj.wrapOn(c, width - 4 * cm, height)
     table_obj.drawOn(c, x, y - table_obj._height)
 
@@ -102,6 +82,7 @@ if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
 
+    # Relecture du CSV pour extraire les données sous forme de dictionnaires (pour JSON)
     reader = csv.reader(io.StringIO(csv_content), strict=True)
     headers = next(reader)  # skip headers
     parsed_rows = []
@@ -125,8 +106,6 @@ if __name__ == "__main__":
             finally:
                 line_index += 1
 
-    # Impression du chemin PDF suivi des données JSON
-    import json
     # S'assurer que le chemin est bien imprimé avec .pdf
     if not pdf_path.endswith(".pdf"):
         pdf_path += ".pdf"
@@ -134,33 +113,7 @@ if __name__ == "__main__":
     print(json.dumps(parsed_rows, ensure_ascii=False))
     print("===END_JSON===")
 
-# --- Téléversement du PDF sur S3 ---
-import boto3
-import sys
-s3_client = boto3.client(
-    's3',
-    endpoint_url="https://s3.eu-west-par.io.cloud.ovh.net/",
-    aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
-    aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
-)
 
-admin_prenom = os.getenv("ADMIN_PRENOM", "").strip()
-admin_nom = os.getenv("ADMIN_NOM", "").strip()
-admin_name = f"{admin_prenom}-{admin_nom}".lower().replace(" ", "_") or "admin"
-s3_key = f"{admin_name}/{pdf_filename}"
-bucket_name = "patient-voice"
 
-if not os.path.isfile(pdf_path):
-    logging.error(f"PDF non trouvé : {pdf_path}")
-    sys.exit(1)
-s3_client.upload_file(
-    pdf_path,
-    bucket_name,
-    s3_key,
-    ExtraArgs={
-        "ACL": "public-read",
-        "ContentType": "application/pdf",
-        "ContentDisposition": "inline"
-    }
-)
-print(s3_key)
+    # Envoi du PDF généré vers le bucket S3 OVH
+    upload_to_ovh_s3(pdf_path, pdf_filename)

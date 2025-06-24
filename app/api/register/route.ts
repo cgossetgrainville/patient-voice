@@ -8,11 +8,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 // Connexion à PostgreSQL (utilise .env si possible)
 const pool = new Pool({
-  user: "avnadmin",
-  host: "postgresql-4b3783ad-o5359142f.database.cloud.ovh.net",
-  database: "DB_CD34",
-  password: "14IYsxzW6e3LMmJVTq0j",
-  port: 20184,
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
@@ -32,18 +28,16 @@ export async function POST(req: Request) {
       "INSERT INTO admin (nom, prenom, email, password) VALUES ($1, $2, $3, $4) RETURNING id",
       [nom, prenom, email, hashedPassword]
     );
+    // Création réussie de l'utilisateur, on récupère son ID
     const userId = result.rows[0].id;
     
+    // À l'inscription d'un admin, on crée une base de données dédiée à son nom
     const newDbName = `db_00${userId}`;
     await client.query(`CREATE DATABASE ${newDbName}`);
 
     const waitForDb = async () => {
       const testPool = new Pool({
-        user: "avnadmin",
-        host: "postgresql-4b3783ad-o5359142f.database.cloud.ovh.net",
-        database: newDbName,
-        password: "14IYsxzW6e3LMmJVTq0j",
-        port: 20184,
+        connectionString: process.env.DATABASE_URL?.replace(/\/[^\/]+$/, `/${newDbName}`),
         ssl: { rejectUnauthorized: false }
       });
 
@@ -60,9 +54,10 @@ export async function POST(req: Request) {
       throw new Error("La base nouvellement créée ne répond pas.");
     };
 
+    // On attend que la nouvelle base de données soit opérationnelle
     await waitForDb();
 
-    // Initialisation de la base nouvellement créée avec init_db.py
+    // Initialisation de la base de données avec un script Python (init_db.py)
     await new Promise<void>((resolve, reject) => {
       exec(`PATIENT_USER_ID=${userId} python3 ./init_db.py`, (error, stdout, stderr) => {
         if (error) {
