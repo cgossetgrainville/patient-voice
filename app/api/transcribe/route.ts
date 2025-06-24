@@ -127,8 +127,7 @@ export async function POST(req: Request) {
 
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: "100mb",
-    },
+    bodyParser: false,
+    sizeLimit: "100mb",
   },
 };
