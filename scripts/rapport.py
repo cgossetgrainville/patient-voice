@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+from utils.s3_utils import download_prompts_from_s3
 from utils.openai_utils import get_openai_client
 from utils.s3_utils import upload_to_ovh_s3
 # Imports pour la génération du PDF avec ReportLab
@@ -16,9 +17,7 @@ import re
 
 client = get_openai_client()
 
-# Chargement du prompt depuis un fichier JSON
-with open(os.path.join(os.path.dirname(__file__), "..", "data", "prompts.json"), "r", encoding="utf-8") as f:
-    prompts = json.load(f)
+prompts = download_prompts_from_s3()
 
 rapport_prompt_template = prompts["rapport_prompt"]
 
@@ -28,7 +27,7 @@ def generate_report(raw_text: str) -> str:
     # Envoie la requete au LLM pour generer le rapport structure
     response = client.chat.completions.create(
         model="Meta-Llama-3_3-70B-Instruct",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": prompt.format(etapes=prompts["etapes_prompt"])}],
         temperature=0.3,
         max_tokens=2048
     )

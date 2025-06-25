@@ -47,7 +47,7 @@ export default function ParametresPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    await fetch("/api/prompts", {
+    const res = await fetch("/api/prompts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -56,8 +56,30 @@ export default function ParametresPage() {
       },
       body: JSON.stringify(prompts),
     });
+
+    if (res.ok) {
+      const refresh = await fetch("/api/prompts/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-prenom": adminInfo?.prenom || "",
+          "x-admin-nom": adminInfo?.nom || "",
+        },
+        body: JSON.stringify(prompts),
+      });
+
+      if (refresh.ok) {
+        alert("Prompts mis à jour avec succès !");
+      } else {
+        alert("Prompts enregistrés mais non rafraîchis.");
+      }
+    } else {
+      const error = await res.json();
+      console.error("Erreur de sauvegarde :", error);
+      alert("Erreur lors de la sauvegarde : " + (error.details || "inconnue"));
+    }
     setSaving(false);
-    alert("Prompts mis à jour avec succès !");
+    // alert("Prompts mis à jour avec succès !");
   };
 
   return (

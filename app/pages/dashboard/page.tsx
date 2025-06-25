@@ -150,16 +150,16 @@ export default function Dashboard() {
                 <p className="dashboard-section-title">Note moyenne par étape</p>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data.themes} layout="vertical">
-                    <XAxis type="number" domain={[0, 10]} />
+                    <XAxis type="number" domain={[0, 10]} tick={{ fontSize: 14 }} />
                     <YAxis
                       type="category"
                       dataKey="label"
-                      width={150}
-                      tick={{ fontSize: 12, fill: '#111827' }}
+                      width={250}
+                      tick={{ fontSize: 14, fill: '#111827' }}
                     />
                     <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(1) : value)} />
-                    <Legend />
-                    <Bar dataKey="sentiment" fill="#1d4ed8" name="Score moyen" />
+                    <Legend wrapperStyle={{ fontSize: 14 }} />
+                    <Bar dataKey="sentiment" fill="#1d4ed8" name="Score moyen" barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

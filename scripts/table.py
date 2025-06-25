@@ -8,6 +8,7 @@ import os
 import json
 from utils.openai_utils import get_openai_client
 from utils.s3_utils import upload_to_ovh_s3
+from utils.s3_utils import download_prompts_from_s3
 from utils.pdf_utils import create_pdf_table, get_custom_style
 # Imports pour la génération du PDF avec ReportLab
 from reportlab.lib.pagesizes import landscape, A4
@@ -22,9 +23,8 @@ import tempfile
 
 client = get_openai_client()
 
-# Chargement du prompt depuis un fichier JSON
-with open(os.path.join("data", "prompts.json"), "r", encoding="utf-8") as f:
-    prompts = json.load(f)
+
+prompts = download_prompts_from_s3()
 
 # Préparation du prompt à envoyer au LLM
 prompt_template = prompts["table_prompt"]

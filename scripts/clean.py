@@ -12,9 +12,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
 client = get_openai_client()
 
-# Chargement du prompt depuis un fichier JSON
-with open(os.path.join(os.path.dirname(__file__), "..", "data", "prompts.json"), "r", encoding="utf-8") as f:
-    prompts = json.load(f)
+from utils.s3_utils import download_prompts_from_s3
+prompts = download_prompts_from_s3()
 
 cleaning_prompt_template = prompts["cleaning_prompt"]
 

@@ -43,7 +43,7 @@ RUN if [ -f yarn.lock ]; then yarn build; \
 ENV PORT=32776
 EXPOSE 32776
 
-# S'assurer que l'app écoute sur 0.0.0.0 (et non localhost)
+# S'assurer que l'app écoute surs 0.0.0.0 (et non localhost)
 ENV HOST=0.0.0.0
 
 CMD ["npm", "run", "dev"]
